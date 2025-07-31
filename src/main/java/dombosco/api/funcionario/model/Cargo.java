@@ -1,0 +1,18 @@
+package dombosco.api.funcionario.model;
+
+public enum Cargo {
+    COORDENADOR_FLORESTA,
+    COORDENADOR_MADRE,
+    DIRETOR,
+    ESTAGIARIO,
+    FINANCEIRO,
+    FISIOTERAPEUTA,
+    FONOAUDIOLOGO,
+    FUNCIONARIO,
+    MUSICOTERAPEUTA,
+    NUTRICIONISTA,
+    PSICOLOGO,
+    PSICOPEDAGOGO,
+    RECEPCIONISTA
+
+}
