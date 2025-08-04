@@ -159,10 +159,10 @@ function populateDemoCredentials() {
         demoCredentialsContainer.appendChild(listItem);
     });
 
-    // Mostrar o container de credenciais demo
+    // REMOVIDO: Não mostrar mais o container de credenciais demo
     const demoContainer = document.querySelector('.demo-credentials');
     if (demoContainer) {
-        demoContainer.style.display = 'block';
+        demoContainer.style.display = 'none'; // Ocultar as credenciais
     }
 }
 
@@ -172,10 +172,26 @@ function fillLoginForm(username, password) {
     document.getElementById('password').value = password;
 }
 
+// Function to ensure database is properly initialized
+function ensureDbInitialized() {
+    // Garantir que os dados do banco estejam disponíveis para login offline
+    if (!db || !db.users || db.users.length === 0) {
+        console.log('🔧 Inicializando dados padrão para login offline...');
+        // Se não há dados no localStorage, usar os dados padrão
+        const defaultData = localStorage.getItem('gestaoClientesDb');
+        if (!defaultData) {
+            // Inicializar com dados básicos se necessário
+            saveDb(); // Isso vai salvar os dados padrão do database.js
+        }
+    }
+    console.log(`📊 Sistema iniciado com ${db.users ? db.users.length : 0} usuários carregados`);
+}
+
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
     loadDb();
-    populateDemoCredentials(); 
+    ensureDbInitialized(); // Garantir que os dados estejam carregados
+    populateDemoCredentials();
     
     // CORREÇÃO: Sempre mostrar tela de login, removendo login automático
     // Limpar qualquer sessão anterior armazenada
