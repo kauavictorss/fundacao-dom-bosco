@@ -39,8 +39,9 @@ window.showDeleteStockItemConfirmation = showDeleteStockItemConfirmation;
 window.showFuncionarioDetails = showFuncionarioDetails; 
 window.showEditFuncionarioModal = showEditFuncionarioModal; 
 window.showEditPasswordModal = showEditPasswordModal; 
-window.deleteFuncionario = deleteFuncionario; 
-window.deleteMuralItem = (id) => { 
+window.deleteFuncionario = deleteFuncionario;
+window.fillLoginForm = fillLoginForm; // NEW: Make fillLoginForm globally available
+window.deleteMuralItem = (id) => {
     const itemToDelete = db.generalDocuments.find(d => d.id === id);
     if (!itemToDelete) return;
 
@@ -128,19 +129,58 @@ function setupMobileGestures() {
   }, false);
 }
 
+// NEW: Function to populate demo credentials
+function populateDemoCredentials() {
+    const demoCredentialsContainer = document.getElementById('demo-credentials-list');
+    if (!demoCredentialsContainer) return;
+
+    // Definir credenciais de demonstração
+    const demoCredentials = [
+        { username: 'director', password: 'admin123', role: 'Diretoria Geral' },
+        { username: 'financeiro', password: 'admin123', role: 'Financeiro' },
+        { username: 'staff', password: 'staff123', role: 'Funcionário' },
+        { username: 'raquel', password: 'admin123', role: 'Coordenadora (Floresta)' },
+        { username: 'tatiana_admin', password: 'admin123', role: 'Coordenadora (Madre)' },
+        { username: 'frances', password: 'intern123', role: 'Estagiária' },
+        { username: 'kimberly', password: 'kimberly123', role: 'Psicóloga' },
+        { username: 'beethoven', password: 'beethoven123', role: 'Musicoterapeuta' }
+    ];
+
+    demoCredentialsContainer.innerHTML = '';
+
+    demoCredentials.forEach(credential => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+            <strong>${credential.role}:</strong> 
+            <span class="credential-item" onclick="fillLoginForm('${credential.username}', '${credential.password}')">
+                ${credential.username} / ${credential.password}
+            </span>
+        `;
+        demoCredentialsContainer.appendChild(listItem);
+    });
+
+    // Mostrar o container de credenciais demo
+    const demoContainer = document.querySelector('.demo-credentials');
+    if (demoContainer) {
+        demoContainer.style.display = 'block';
+    }
+}
+
+// Function to fill login form with demo credentials
+function fillLoginForm(username, password) {
+    document.getElementById('username').value = username;
+    document.getElementById('password').value = password;
+}
+
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
     loadDb();
     populateDemoCredentials(); 
     
-    if (checkLogin()) {
-        showMainApp();
-        initializeApp();
-        checkNotifications();
-        resetIdleTimer(); // Start idle timer on initial load if logged in
-    } else {
-        showLoginScreen();
-    }
+    // CORREÇÃO: Sempre mostrar tela de login, removendo login automático
+    // Limpar qualquer sessão anterior armazenada
+    logout();
+    showLoginScreen();
 
     setupEventListeners();
     setupFormHandlers();
@@ -551,47 +591,6 @@ function setupEventListeners() {
     document.getElementById('form-novo-atendimento').addEventListener('submit', (e) => {
         e.preventDefault();
         saveNewAttendance();
-    });
-
-    document.querySelectorAll('.modal-close-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.target.closest('.modal-overlay').style.display = 'none';
-        });
-    });
-
-    document.getElementById('btn-add-note').addEventListener('click', () => {
-        if (!checkTabAccess('historico', 'edit') && !checkTabAccess('meus-pacientes', 'edit')) { 
-            showNotification('Você não tem permissão para adicionar notas de cliente.', 'error');
-            return;
-        }
-        document.getElementById('form-add-note').reset();
-        document.getElementById('modal-detalhes-cliente').style.display = 'none';
-        document.getElementById('modal-add-note').style.display = 'flex';
-    });
-
-    document.getElementById('form-add-note').addEventListener('submit', (e) => {
-        e.preventDefault();
-        addClientNote();
-    });
-
-    document.getElementById('btn-add-document').addEventListener('click', () => {
-        if (!checkTabAccess('historico', 'edit') && !checkTabAccess('meus-pacientes', 'edit')) {
-            showNotification('Você não tem permissão para anexar documentos a clientes.', 'error');
-            return;
-        }
-        document.getElementById('form-add-document').reset();
-        document.getElementById('modal-detalhes-cliente').style.display = 'none';
-        document.getElementById('modal-add-document').style.display = 'flex';
-    });
-
-    document.getElementById('form-add-document').addEventListener('submit', (e) => {
-        e.preventDefault();
-        addClientDocument();
-    });
-
-    document.getElementById('form-editar-agendamento').addEventListener('submit', (e) => {
-        e.preventDefault();
-        saveEditedSchedule();
     });
 
     document.getElementById('form-cancelar-agendamento').addEventListener('submit', (e) => {
@@ -1173,1006 +1172,131 @@ async function saveNewSchedule() {
     if (assignedToUserId && PROFESSIONAL_ROLES.includes(db.users.find(u => u.id === assignedToUserId)?.role) && db.users.find(u => u.id === assignedToUserId)) {
         const client = db.clients.find(c => c.id === clientId);
         if (client) {
-            // NEW LOGIC: Add to the array of professionals instead of replacing
-            if (!client.assignedProfessionalIds) {
-                client.assignedProfessionalIds = [];
-            }
+            client.assignedProfessionalIds = client.assignedProfessionalIds || [];
             if (!client.assignedProfessionalIds.includes(assignedToUserId)) {
-                const oldAssignedNames = client.assignedProfessionalIds.map(id => db.users.find(u => u.id === id)?.name || 'Desconhecido').join(', ');
                 client.assignedProfessionalIds.push(assignedToUserId);
-                const newAssignedNames = client.assignedProfessionalIds.map(id => db.users.find(u => u.id === id)?.name || 'Desconhecido').join(', ');
-
-                if (!client.changeHistory) client.changeHistory = [];
-                client.changeHistory.push({
-                    id: db.nextChangeId++,
-                    date: new Date().toISOString(),
-                    changedBy: getCurrentUser().name,
-                    changes: [
-                        {
-                            field: 'Profissionais Vinculados',
-                            oldValue: oldAssignedNames || 'Nenhum',
-                            newValue: newAssignedNames
-                        }
-                    ]
-                });
             }
         }
     }
 
     saveDb();
-
-    document.getElementById('form-novo-agendamento').reset();
-    document.getElementById('modal-novo-agendamento').style.display = 'none';
-    renderSchedule(document.getElementById('date-selector').value);
+    renderSchedule();
     renderCalendar();
-
-    showNotification('Agendamento criado com sucesso!', 'success');
-
-    if (sendEmail) {
-        const client = db.clients.find(c => c.id === newSchedule.clientId);
-        if (client && client.email) {
-            await generateAndSendAppointmentEmail(newSchedule, client);
-        } else if (client && !client.email) {
-            showNotification('Agendamento criado, mas não foi possível enviar a confirmação por email: Cliente sem email cadastrado.', 'warning');
-        }
-    }
+    document.getElementById('modal-novo-agendamento').style.display = 'none';
+    showNotification('Agendamento criado com sucesso.', 'success');
 }
 
-async function generateAndSendAppointmentEmail(schedule, client) {
-    const nomeCliente = client.name;
-    const dataAgendamento = new Date(schedule.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
-    const horaAgendamento = schedule.time;
-    const nomeProfissional = schedule.assignedToUserName || 'Não Atribuído';
-    const nomeUnidade = 'Clínica Neuropsico';
-    const emailCliente = client.email;
-
-    if (!nomeCliente || !dataAgendamento || !horaAgendamento || !nomeProfissional || !emailCliente) {
-        showNotification('Erro: Dados incompletos para gerar confirmação por email.', 'error', 'Erro de Envio de Email');
-        console.error('Missing data for email confirmation:', { nomeCliente, dataAgendamento, horaAgendamento, nomeProfissional, emailCliente });
-        return;
-    }
-
-    const prompt = `Gere o corpo de um email de confirmação de agendamento utilizando *exatamente* a seguinte estrutura, preenchendo os valores entre chaves duplas {{}}:
-
-    Olá, {{nomeCliente}}!
-
-    Seu agendamento está confirmado para o dia {{dataAgendamento}}, às {{horaAgendamento}}.
-    Profissional responsável: {{nomeProfissional}}
-    Unidade de atendimento: {{nomeUnidade}}
-
-    Qualquer dúvida, estamos à disposição.
-
-    Aqui estão os dados para preencher:
-    nomeCliente: "${nomeCliente}"
-    dataAgendamento: "${dataAgendamento}"
-    horaAgendamento: "${horaAgendamento}"
-    nomeProfissional: "${nomeProfissional}"
-    nomeUnidade: "${nomeUnidade}"
-
-    Não inclua nada além do corpo do email, sem saudações extras ou assinaturas.`;
-
-    try {
-        const completion = await websim.chat.completions.create({
-            messages: [
-                {
-                    role: "system",
-                    content: "Você é um assistente de IA que preenche um modelo de email com as informações fornecidas. O output deve ser *exatamente* o modelo fornecido, com os placeholders substituídos pelos valores. Não adicione introduções ou conclusões."
-                },
-                {
-                    role: "user",
-                    content: prompt,
-                },
-            ],
-            temperature: 0.1,
-        });
-
-        const emailBody = completion.content;
-
-        showNotification(
-            `A confirmação de agendamento para ${nomeCliente} foi 'enviada' de webmaster@fundacaodombosco.org para ${emailCliente}.`,
-            'success',
-            'Email de Confirmação Enviado (Simulado)',
-            10000
-        );
-        showNotification(
-            `Assunto: Confirmação de Agendamento\n\n${emailBody}`,
-            'info',
-            'Corpo do Email',
-            15000
-        );
-
-    } catch (error) {
-        console.error("Erro ao gerar email de confirmação:", error);
-        showNotification('Erro ao gerar a confirmação por email. Tente novamente.', 'error', 'Erro de IA');
-    }
+// Function to close create schedule modal
+function closeCreateScheduleModal() {
+    document.getElementById('modal-novo-agendamento').style.display = 'none';
 }
 
-function saveNewAttendance() {
-    const client = db.clients.find(c => c.id === window.currentClientId);
-    if (!client) return;
-
-    const date = document.getElementById('data-atendimento').value;
-    const anamnesisTypeId = document.getElementById('select-anamnese').value;
-    const notes = document.getElementById('notas-atendimento').value;
-    const value = parseFloat(document.getElementById('valor-atendimento').value) || 0;
-    const durationTime = document.getElementById('duracao-atendimento').value;
-    const durationHours = convertTimeToDecimalHours(durationTime);
-    const attachments = document.getElementById('anexos-atendimento').files;
-
-    if (!date || !anamnesisTypeId) {
-        showNotification('Por favor, preencha todos os campos obrigatórios.', 'warning');
-        return;
-    }
-
-    if (!client.appointments) {
-        client.appointments = [];
-    }
-
-    const newAppointment = {
-        id: db.nextAppointmentId++,
-        date: date,
-        anamnesisTypeId: anamnesisTypeId,
-        notes: notes,
-        value: value,
-        durationHours: durationHours,
-        attendedBy: getCurrentUser().name,
-        internId: getCurrentUser().role === 'intern' ? getCurrentUser().id : null
-    };
-
-    if (attachments.length > 0) {
-        newAppointment.attachments = [];
-        let filesProcessed = 0;
-
-        Array.from(attachments).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                newAppointment.attachments.push({
-                    fileName: file.name,
-                    fileData: e.target.result,
-                    uploadDate: new Date().toISOString()
-                });
-
-                filesProcessed++;
-                if (filesProcessed === attachments.length) {
-                    client.appointments.push(newAppointment);
-                    saveDb();
-
-                    document.getElementById('form-novo-atendimento').reset();
-                    document.getElementById('modal-novo-atendimento').style.display = 'none';
-                    showClientDetails(window.currentClientId);
-
-                    showNotification('Histórico adicionado com sucesso!', 'success');
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    } else {
-        // No attachments, save directly
-        client.appointments.push(newAppointment);
-        saveDb();
-
-        document.getElementById('form-novo-atendimento').reset();
-        document.getElementById('modal-novo-atendimento').style.display = 'none';
-        showClientDetails(window.currentClientId);
-
-        showNotification('Histórico adicionado com sucesso!', 'success');
-    }
-}
-
-function saveCancellation() {
-    const schedule = db.schedules.find(s => s.id === window.currentCancellingScheduleId);
-    if (!schedule) return;
-
-    const reason = document.getElementById('motivo-cancelamento').value.trim();
-    const imageFile = document.getElementById('imagem-cancelamento').files[0];
-
-    if (!reason) {
-        showNotification('Por favor, digite o motivo do cancelamento.', 'warning');
-        return;
-    }
-
-    schedule.status = 'cancelado';
-    schedule.cancelReason = reason;
-    schedule.cancelDate = new Date().toISOString();
-    schedule.canceledBy = getCurrentUser().name;
-
-    if (imageFile) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            schedule.cancelImage = e.target.result;
-            schedule.cancelImageName = imageFile.name;
-
-            saveDb();
-            document.getElementById('form-cancelar-agendamento').reset();
-            document.getElementById('preview-imagem-cancelamento').style.display = 'none';
-            document.getElementById('modal-cancelar-agendamento').style.display = 'none';
-            renderSchedule(document.getElementById('date-selector').value);
-            renderCalendar();
-            showNotification('Agendamento cancelado com sucesso!', 'success');
-        };
-        reader.readAsDataURL(imageFile);
-    } else {
-        saveDb();
-        document.getElementById('form-cancelar-agendamento').reset();
-        document.getElementById('modal-cancelar-agendamento').style.display = 'none';
-        renderSchedule(document.getElementById('date-selector').value);
-        renderCalendar();
-        showNotification('Agendamento cancelado com sucesso!', 'success');
-    }
-}
-
-function saveAttendanceConfirmation() {
-    const schedule = db.schedules.find(s => s.id === window.currentConfirmingScheduleId);
-    if (!schedule) return;
-
-    const client = db.clients.find(c => c.id === schedule.clientId);
-    if (!client) return;
-
-    const professional = document.getElementById('profissional-responsavel').value.trim();
-    const observations = document.getElementById('observacoes-confirmacao').value.trim();
-    const value = parseFloat(document.getElementById('valor-atendimento-confirmacao').value) || 0;
-    const durationTime = document.getElementById('duracao-atendimento-confirmacao').value;
-    const durationHours = convertTimeToDecimalHours(durationTime);
-    const attachments = document.getElementById('anexos-confirmacao').files;
-
-    if (!professional) {
-        showNotification('Por favor, informe o profissional responsável.', 'warning');
-        return;
-    }
-
-    const materialsUsed = [];
-    const materialSelections = document.querySelectorAll('#materials-selection-confirm .material-selection');
-
-    let hasInsufficientStock = false;
-
-    materialSelections.forEach(selection => {
-        const itemId = parseInt(selection.querySelector('.material-item').value);
-        const quantity = parseInt(selection.querySelector('.material-quantity').value) || 0;
-
-        if (itemId && quantity > 0) {
-            const stockItem = db.stockItems.find(item => item.id === itemId);
-            if (stockItem) {
-                if (stockItem.quantity >= quantity) {
-                    materialsUsed.push({
-                        itemId: itemId,
-                        itemName: stockItem.name,
-                        quantityUsed: quantity,
-                        unit: stockItem.unit
-                    });
-
-                    stockItem.quantity -= quantity;
-
-                    db.stockMovements.push({
-                        id: db.nextMovementId++,
-                        itemId: itemId,
-                        itemName: stockItem.name,
-                        type: 'saida',
-                        quantity: quantity,
-                        reason: `Atendimento - ${client.name}`,
-                        date: new Date().toISOString(),
-                        user: getCurrentUser().name,
-                        scheduleId: schedule.id,
-                        itemUnitValue: stockItem.unitValue,
-                        purchaseNotes: null,
-                        purchaseFileData: null,
-                        purchaseFileName: null
-                    });
-                } else {
-                    showNotification(`Estoque insuficiente para ${stockItem.name}. Disponível: ${stockItem.quantity} unidades.`, 'error');
-                    hasInsufficientStock = true;
-                    return;
-                }
-            }
-        }
-    });
-
-    if (hasInsufficientStock) {
-        return;
-    }
-
-    let internIdForAttendance = null;
-    if (schedule.assignedToUserId) {
-        const assignedUser = db.users.find(u => u.id === schedule.assignedToUserId);
-        // Only assign internIdForAttendance if the assigned user's role is specifically 'intern' (predefined)
-        if (assignedUser && assignedUser.role === 'intern') {
-            internIdForAttendance = assignedUser.id;
-        }
-    } else if (getCurrentUser().role === 'intern') {
-        internIdForAttendance = getCurrentUser().id;
-    }
-
-    const newAppointment = {
-        id: db.nextAppointmentId++,
-        date: schedule.date,
-        time: schedule.time,
-        serviceType: schedule.serviceType,
-        notes: observations,
-        value: value,
-        durationHours: durationHours,
-        attendedBy: professional,
-        materialsUsed: materialsUsed,
-        status: 'concluido',
-        confirmedAt: new Date().toISOString(),
-        internId: internIdForAttendance
-    };
-
-    if (attachments.length > 0) {
-        newAppointment.attachments = [];
-        let filesProcessed = 0;
-
-        Array.from(attachments).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                newAppointment.attachments.push({
-                    fileName: file.name,
-                    fileData: e.target.result,
-                    uploadDate: new Date().toISOString()
-                });
-
-                filesProcessed++;
-                if (filesProcessed === attachments.length) {
-                    finalizeConfirmation();
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    } else {
-        finalizeConfirmation();
-    }
-
-    function finalizeConfirmation() {
-        client.appointments.push(newAppointment);
-        schedule.status = 'concluido';
-        schedule.confirmedAt = new Date().toISOString();
-        schedule.attendanceId = newAppointment.id;
-
-        saveDb();
-
-        document.getElementById('form-confirmar-atendimento').reset();
-        document.getElementById('modal-confirmar-atendimento').style.display = 'none';
-        renderSchedule(document.getElementById('date-selector').value);
-        renderCalendar();
-
-        if (checkTabAccess('estoque', 'view') || checkTabAccess('financeiro', 'view')) { // Check permission for stock/finance tabs
-            renderStockList();
-            renderStockMovements();
-            updateStockSummary();
-            const selectedPeriod = document.getElementById('financial-period-selector').value;
-            renderFinancialReport(selectedPeriod);
-        }
-
-        showNotification('Atendimento confirmado com sucesso!', 'success');
-    }
-}
-
-function addMaterialSelection(modalType = 'default') {
-    const containerId = modalType === 'confirm' ? 'materials-selection-confirm' : 'materials-selection';
-    const container = document.getElementById(containerId);
-    const selectionDiv = document.createElement('div');
-    selectionDiv.className = 'material-selection';
-
-    selectionDiv.innerHTML = `
-        <div class="form-row">
-            <div class="form-group form-group-large">
-                <select class="material-item" required>
-                    <option value="">Selecione um material</option>
-                    ${db.stockItems.map(item => {
-                        return `<option value="${item.id}">${item.name} - R$ ${item.unitValue.toFixed(2).replace('.', ',')} / ${item.quantity} unidades disponíveis</option>`;
-                    }).join('')}
-                </select>
-            </div>
-            <div class="form-group form-group-small">
-                <input type="number" class="material-quantity" placeholder="Qtd" min="1" required>
-            </div>
-            <div class="form-group form-group-small">
-                <button type="button" class="btn-delete btn-remove-material">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            </div>
-        </div>
-    `;
-
-    selectionDiv.querySelector('.btn-remove-material').addEventListener('click', () => {
-        selectionDiv.remove();
-    });
-
-    container.appendChild(selectionDiv);
-}
-
-function addStockItem() {
-    if (!checkTabAccess('estoque', 'edit')) {
-        showNotification('Você não tem permissão para adicionar itens ao estoque.', 'error');
-        return;
-    }
-
-    const name = document.getElementById('stock-item-name').value.trim();
-    const category = document.getElementById('stock-item-category').value;
-    const quantity = parseInt(document.getElementById('stock-item-quantity').value);
-    const minStock = parseInt(document.getElementById('stock-item-min-stock').value);
-    const unitValue = parseFloat(document.getElementById('stock-item-unit-value').value);
-    const description = document.getElementById('stock-item-description').value.trim();
-    const purchaseNotes = document.getElementById('stock-purchase-notes').value.trim();
-    const purchaseFileInput = document.getElementById('stock-purchase-file');
-    const purchaseFile = purchaseFileInput.files[0];
-
-    if (!name || !category || quantity < 0 || minStock < 0 || isNaN(unitValue) || unitValue < 0) {
-        showNotification('Por favor, preencha todos os campos obrigatórios corretamente.', 'warning');
-        return;
-    }
-
-    const newItem = {
-        id: db.nextStockItemId++,
-        name: name,
-        category: category,
-        quantity: quantity,
-        minStock: minStock,
-        unit: 'unidade',
-        unitValue: unitValue,
-        description: description,
-        createdAt: new Date().toISOString(),
-        createdBy: getCurrentUser().name
-    };
-
-    db.stockItems.push(newItem);
-
-    const newMovement = {
-        id: db.nextMovementId++,
-        itemId: newItem.id,
-        itemName: newItem.name,
-        type: 'entrada',
-        quantity: quantity,
-        reason: 'Adição inicial de estoque',
-        date: new Date().toISOString(),
-        user: getCurrentUser().name,
-        itemUnitValue: newItem.unitValue,
-        purchaseNotes: purchaseNotes
-    };
-
-    if (purchaseFile) {
-        if (purchaseFile.size > 5 * 1024 * 1024) {
-            showNotification('O comprovante de compra deve ter no máximo 5MB.', 'error');
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            newMovement.purchaseFileData = e.target.result;
-            newMovement.purchaseFileName = purchaseFile.name;
-            db.stockMovements.push(newMovement);
-            saveAndRefreshStockUI();
-        };
-        reader.onerror = function() {
-            showNotification('Erro ao processar o arquivo de comprovante. Tente novamente.', 'error');
-        };
-        reader.readAsDataURL(purchaseFile);
-    } else {
-        db.stockMovements.push(newMovement);
-        saveAndRefreshStockUI();
-    }
-
-    function saveAndRefreshStockUI() {
-        saveDb();
-        document.getElementById('form-add-stock').reset();
-        document.getElementById('modal-add-stock').style.display = 'none';
-        renderStockList();
-        renderStockMovements();
-        updateStockSummary();
-        const selectedPeriod = document.getElementById('financial-period-selector').value;
-        renderFinancialReport(selectedPeriod);
-        showNotification('Item adicionado ao estoque com sucesso!', 'success');
-        updateGlobalSearchDatalist();
-    }
-}
-
-function processStockAdjustment() {
-    if (!checkTabAccess('estoque', 'edit')) {
-        showNotification('Você não tem permissão para ajustar o estoque.', 'error');
-        return;
-    }
-
-    const { itemId, action } = window.currentStockAdjustment;
-    const item = db.stockItems.find(item => item.id === itemId);
-    if (!item) return;
-
-    const quantity = parseInt(document.getElementById('adjust-stock-quantity').value);
-    const reason = document.getElementById('adjust-stock-reason').value.trim();
-
-    if (!quantity || quantity <= 0 || !reason) {
-        showNotification('Por favor, preencha todos os campos corretamente.', 'warning');
-        return;
-    }
-
-    if (action === 'remove' && item.quantity < quantity) {
-        showNotification(`Quantidade insuficiente em estoque. Disponível: ${item.quantity} unidades.`, 'error');
-        return;
-    }
-
-    if (action === 'add') {
-        item.quantity += quantity;
-    } else {
-        item.quantity -= quantity;
-    }
-
-    db.stockMovements.push({
-        id: db.nextMovementId++,
-        itemId: itemId,
-        itemName: item.name,
-        type: action === 'add' ? 'entrada' : 'saida',
-        quantity: quantity,
-        reason: reason,
-        date: new Date().toISOString(),
-        user: getCurrentUser().name,
-        itemUnitValue: item.unitValue,
-        purchaseNotes: null,
-        purchaseFileData: null,
-        purchaseFileName: null
-    });
-
-    saveDb();
-
-    document.getElementById('modal-adjust-stock').style.display = 'none';
-    renderStockList();
-    renderStockMovements();
-    updateStockSummary();
-    const selectedPeriod = document.getElementById('financial-period-selector').value;
-    renderFinancialReport(selectedPeriod);
-
-    const actionText = action === 'add' ? 'adicionado ao' : 'removido do';
-    showNotification(`${quantity} unidades ${actionText} estoque com sucesso!`, 'success');
-    updateGlobalSearchDatalist();
-}
-
-function addNewFuncionario() {
-    if (!checkTabAccess('funcionarios', 'edit')) {
-        showNotification('Você não tem permissão para adicionar funcionários.', 'error');
-        return;
-    }
-
-    const username = document.getElementById('new-funcionario-username').value.trim();
-    const password = document.getElementById('new-funcionario-password').value.trim();
-    const name = document.getElementById('new-funcionario-name').value.trim();
-    const role = document.getElementById('new-funcionario-role').value; // Get from select dropdown
-    const cpf = document.getElementById('new-funcionario-cpf').value.trim();
-    const phone = document.getElementById('new-funcionario-phone').value.trim();
-    const email = document.getElementById('new-funcionario-email').value.trim();
-    const address = document.getElementById('new-funcionario-address').value.trim();
-
-    // Academic fields are now always collected if filled, regardless of the custom role string
-    let academicInfo = {};
-    // Only collect academic info if the section is visible (which is based on the selected role)
-    if (document.getElementById('new-funcionario-academic-fields').style.display === 'block') {
-        academicInfo = {
-            institution: document.getElementById('new-funcionario-institution').value.trim(),
-            graduationPeriod: document.getElementById('new-funcionario-graduation-period').value.trim(),
-            education: document.getElementById('new-funcionario-education').value.trim(),
-            discipline: document.getElementById('new-funcionario-discipline').value.trim()
-        };
-    }
-
-    // Clear academicInfo if all its fields are empty
-    if (Object.values(academicInfo).every(val => val === '')) {
-        academicInfo = {};
-    }
-
-    // Collect tab permissions from the dynamically generated selects
-    const newTabAccess = {};
-    let hasCustomAccess = false;
-    document.querySelectorAll('#new-funcionario-tab-permissions select').forEach(select => {
-        const tabId = select.dataset.tabId; // Use data-tab-id
-        const accessLevel = select.value;
-        if (accessLevel !== 'default') { // Only include if it's an explicit override
-            newTabAccess[tabId] = accessLevel;
-            hasCustomAccess = true;
-        }
-    });
-
-    if (!username || !password || !name || !role) {
-        showNotification('Usuário, senha, nome e cargo são campos obrigatórios.', 'warning');
-        return;
-    }
-
-    const funcionarioData = {
-        username,
-        password,
-        name,
-        role, // Use the role from select dropdown
-        cpf,
-        phone,
-        email,
-        address,
-        academicInfo: academicInfo,
-        tabAccess: hasCustomAccess ? newTabAccess : null,
-    };
-
-    if (addFuncionario(funcionarioData)) {
-        document.getElementById('form-add-funcionario').reset();
-        document.getElementById('modal-add-funcionario').style.display = 'none';
-        renderFuncionarioList();
-        updateGlobalSearchDatalist();
-    }
-}
-
-function renderGeneralDocuments(filter = '', typeFilter = '') {
-    const documentsList = document.getElementById('general-documents-list');
-    if (!documentsList) return;
-
-    if (!checkTabAccess('documentos', 'view')) { // Check for general view access to the documents tab
-        documentsList.innerHTML = '<p>Você não tem permissão para visualizar o mural.</p>';
-        return;
-    }
-
-    documentsList.innerHTML = '';
-
-    if (!db.generalDocuments || db.generalDocuments.length === 0) {
-        documentsList.innerHTML = '<p class="empty-state-message">Nenhum item no mural. Clique em um dos botões acima para adicionar um documento, nota ou reunião.</p>';
-        return;
-    }
-
-    const lowerCaseFilter = filter.toLowerCase();
-    const currentUser = getCurrentUser(); // Get current user for meeting visibility
-
-    let filteredDocuments = db.generalDocuments.filter(doc => {
-        const matchesSearch = lowerCaseFilter === '' ||
-                            doc.title.toLowerCase().includes(lowerCaseFilter) ||
-                            (doc.description && doc.description.toLowerCase().includes(lowerCaseFilter)) ||
-                            (doc.content && doc.content.toLowerCase().includes(lowerCaseFilter)) ||
-                            (doc.createdBy && doc.createdBy.toLowerCase().includes(lowerCaseFilter));
-        const matchesType = typeFilter === '' || (doc.documentType === typeFilter || doc.type === typeFilter);
-
-        // NEW LOGIC: Meeting visibility restricted to attendees
-        if (doc.documentType === 'reuniao') {
-            // Only show meeting if user is an attendee OR if the user has edit access to the documents tab
-            return matchesSearch && matchesType && (doc.attendees.includes(currentUser.id) || checkTabAccess('documentos', 'edit'));
-        } else {
-            // For other document types (file, note), apply general visibility
-            return matchesSearch && matchesType;
-        }
-    });
-
-    if (filteredDocuments.length === 0) {
-        documentsList.innerHTML = '<p class="empty-state-message">Nenhum item corresponde à sua busca.</p>';
-        return;
-    }
-
-    filteredDocuments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    const typeInfo = {
-        'documento': { label: 'Documento', icon: 'fa-file-alt', color: '#3b82f6' },
-        'nota': { label: 'Nota', icon: 'fa-sticky-note', color: '#f59e0b' },
-        'relatorio': { label: 'Relatório', icon: 'fa-chart-pie', color: '#10b981' },
-        'comprovante': { label: 'Comprovante', icon: 'fa-receipt', color: '#6366f1' },
-        'contrato': { label: 'Contrato', icon: 'fa-file-signature', color: '#8b5cf6' },
-        'lembrete': { label: 'Lembrete', icon: 'fa-bell', color: '#f59e0b' },
-        'procedimento': { label: 'Procedimento', icon: 'fa-list-check', color: '#0ea5e9' },
-        'observacao': { label: 'Observação', icon: 'fa-eye', color: '#64748b' },
-        'reuniao': { label: 'Reunião', icon: 'fa-users', color: '#ef4444' },
-        'outros': { label: 'Outros', icon: 'fa-box-open', color: '#64748b' }
-    };
-
-    filteredDocuments.forEach(doc => {
-        const isMeeting = doc.documentType === 'reuniao';
-        const docType = doc.type || 'outros';
-        const info = typeInfo[docType] || typeInfo['outros'];
-
-        const extraDetails = isMeeting ? `
-            <div class="reuniao-details">
-                <div class="reuniao-detail-item">
-                    <i class="fa-solid fa-calendar-alt"></i>
-                    <span>${new Date(doc.meetingDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span>
-                </div>
-                <div class="reuniao-detail-item">
-                    <i class="fa-solid fa-clock"></i>
-                    <span>${doc.meetingTime}</span>
-                </div>
-                ${doc.location ? `
-                <div class="reuniao-detail-item">
-                    <i class="fa-solid fa-map-marker-alt"></i>
-                    <span>${doc.location}</span>
-                </div>
-                ` : ''}
-            </div>
-            <div class="reuniao-attendees">
-                <strong>Participantes:</strong>
-                <div class="attendees-list">
-                 ${doc.attendees.map(id => {
-                    const user = db.users.find(u => u.id === id);
-                    return `<span class="attendee-badge ${currentUser?.id === id ? 'current-user' : ''}">${user ? user.name.split(' ')[0] : 'ID desconhecido'}</span>`;
-                }).join('')}
-                </div>
-            </div>
-        ` : '';
-
-        const isImage = doc.fileData && /\.(jpe?g|png|gif|webp)$/i.test(doc.fileName);
-        const docCard = document.createElement('div');
-        docCard.className = `general-document-card ${isMeeting ? 'reuniao-card' : ''}`;
-        docCard.style.setProperty('--card-accent-color', info.color);
-
-        docCard.innerHTML = `
-            <div class="general-document-card-header">
-                <div class="general-document-card-icon">
-                    <i class="fa-solid ${info.icon}"></i>
-                </div>
-                <div class="general-document-card-title-group">
-                    <h4>${doc.title}</h4>
-                    <span class="general-document-card-type">${info.label}</span>
-                </div>
-                ${checkTabAccess('documentos', 'edit') ? `
-                <button class="btn-delete-doc-small" onclick="window.deleteMuralItem(${doc.id})">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-                ` : ''}
-            </div>
-            <div class="general-document-card-body">
-                ${doc.description ? `<p class="general-document-card-description">${doc.description}</p>` : ''}
-                ${doc.content ? `<div class="general-document-card-content">${doc.content}</div>` : ''}
-                ${extraDetails}
-            </div>
-            <div class="general-document-card-footer">
-                <div class="general-document-card-author">
-                    <i class="fa-solid fa-user"></i>
-                    <span>Por ${doc.createdBy} em ${new Date(doc.createdAt).toLocaleDateString('pt-BR')}</span>
-                </div>
-                <div class="general-document-card-actions">
-                    ${isImage ? `<button class="btn-preview" onclick="window.previewFile('${doc.title.replace(/'/g, "\\'")}', '${doc.fileData}', '${doc.fileName.replace(/'/g, "\\'")}')"><i class="fa-solid fa-eye"></i> Visualizar</button>` : ''}
-                    ${doc.fileData ? `
-                        <a href="${doc.fileData}" download="${doc.fileName}" class="btn-download">
-                            <i class="fa-solid fa-download"></i> Baixar
-                        </a>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-
-        documentsList.appendChild(docCard);
-    });
-}
-
-function addGeneralDocument() {
-    if (!checkTabAccess('documentos', 'edit')) {
-        showNotification('Você não tem permissão para adicionar documentos gerais.', 'error');
-        return;
-    }
-
-    const title = document.getElementById('general-document-title').value.trim();
-    const type = document.getElementById('general-document-type').value;
-    const description = document.getElementById('general-document-description').value.trim();
-    const fileInput = document.getElementById('general-document-file');
-
-    if (!title || !type || !fileInput.files[0]) {
-        showNotification('Por favor, preencha todos os campos obrigatórios e selecione um arquivo.', 'warning');
-        return;
-    }
-
-    const file = fileInput.files[0];
-
-    // Check file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-        showNotification('O arquivo deve ter no máximo 5MB.', 'error');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        if (!db.generalDocuments) {
-            db.generalDocuments = [];
-        }
-
-        const newDocument = {
-            id: db.nextGeneralDocumentId++,
-            title: title,
-            type: type,
-            description: description,
-            fileName: file.name,
-            fileData: e.target.result,
-            createdAt: new Date().toISOString(),
-            createdBy: getCurrentUser().name,
-            documentType: 'file'
-        };
-
-        db.generalDocuments.push(newDocument);
-        saveDb();
-
-        document.getElementById('modal-add-general-document').style.display = 'none';
-        document.getElementById('form-add-general-document').reset();
-        renderGeneralDocuments();
-        showNotification('Documento adicionado com sucesso!', 'success');
-    };
-
-    reader.onerror = function() {
-        showNotification('Erro ao processar o arquivo. Tente novamente.', 'error');
-    };
-
-    reader.readAsDataURL(file);
-}
-
-function addGeneralNote() {
-    if (!checkTabAccess('documentos', 'edit')) {
-        showNotification('Você não tem permissão para adicionar notas gerais.', 'error');
-        return;
-    }
-
-    const title = document.getElementById('general-note-title').value.trim();
-    const type = document.getElementById('general-note-type').value;
-    const content = document.getElementById('general-note-content').value.trim();
-
-    if (!title || !type || !content) {
-        showNotification('Por favor, preencha todos os campos obrigatórios.', 'warning');
-        return;
-    }
-
-    if (!db.generalDocuments) {
-        db.generalDocuments = [];
-    }
-
-    const newNote = {
-        id: db.nextGeneralDocumentId++,
-        title: title,
-        type: type,
-        content: content,
-        createdAt: new Date().toISOString(),
-        createdBy: getCurrentUser().name,
-        documentType: 'note'
-    };
-
-    db.generalDocuments.push(newNote);
-    saveDb();
-
-    document.getElementById('modal-add-general-note').style.display = 'none';
-    document.getElementById('form-add-general-note').reset();
-    renderGeneralDocuments();
-    showNotification('Nota adicionada com sucesso!', 'success');
-}
-
-// NEW: Function to check and show meeting notifications on login
+// Function to check notifications (placeholder)
 function checkNotifications() {
-    const notificationCheckDelay = 500;
-
-    setTimeout(() => {
-        const currentUser = getCurrentUser();
-        if (!currentUser) return;
-
-        const notificationBell = document.getElementById('notification-bell');
-        const notificationCountBadge = document.getElementById('notification-count');
-        const notificationList = document.getElementById('notification-list');
-
-        if (!notificationBell || !notificationCountBadge || !notificationList) return;
-
-        const unreadNotifications = (db.notifications || []).filter(n => n.userId === currentUser.id && !n.isRead);
-
-        const allUserNotifications = (db.notifications || [])
-            .filter(n => n.userId === currentUser.id)
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-        notificationList.innerHTML = '';
-
-        if (allUserNotifications.length > 0) {
-            if (unreadNotifications.length > 0) {
-                notificationCountBadge.textContent = unreadNotifications.length;
-                notificationCountBadge.style.display = 'flex';
-            } else {
-                notificationCountBadge.style.display = 'none';
-            }
-
-            const notificationIcons = {
-                'meeting_invite': 'fa-users',
-                'meeting_cancellation': 'fa-calendar-times',
-                'schedule_assignment': 'fa-calendar-check',
-                'client_assignment': 'fa-user-plus'
-            };
-
-            allUserNotifications.slice(0, 10).forEach(notification => {
-                const icon = notificationIcons[notification.type] || 'fa-bell';
-                const item = document.createElement('div');
-                item.className = `notification-item ${notification.isRead ? '' : 'unread'}`;
-                item.innerHTML = `
-                    <div class="notification-item-icon"><i class="fa-solid ${icon}"></i></div>
-                    <div class="notification-item-content">
-                        <h5>${notification.title}</h5>
-                        <p>${notification.message}</p>
-                        <p class="notification-timestamp">${new Date(notification.createdAt).toLocaleString('pt-BR')}</p>
-                    </div>
-                `;
-                notificationList.appendChild(item);
-            });
-
-        } else {
-            notificationCountBadge.style.display = 'none';
-            notificationList.innerHTML = '<p style="padding: 16px; text-align: center; color: var(--text-muted);">Nenhuma notificação.</p>';
-        }
-    }, notificationCheckDelay);
+    // This function will check for notifications when user logs in
+    // Implementation depends on your notification system
+    console.log('Checking notifications...');
 }
 
-// NEW: Function to mark notifications as read
-function markNotificationsAsRead() {
-    const currentUser = getCurrentUser();
-    if (!currentUser) return;
-
-    let madeChanges = false;
-    db.notifications.forEach(n => {
-        if (n.userId === currentUser.id && !n.isRead) {
-            n.isRead = true;
-            madeChanges = true;
-        }
-    });
-
-    if (madeChanges) {
-        saveDb();
-        setTimeout(checkNotifications, 300);
-    }
+// Function to save new attendance (placeholder)
+function saveNewAttendance() {
+    // Implementation for saving new attendance
+    console.log('Saving new attendance...');
 }
 
-// NEW function to populate the role dropdown in the "Add Employee" modal
+// Function to save cancellation (placeholder)
+function saveCancellation() {
+    // Implementation for saving cancellation
+    console.log('Saving cancellation...');
+}
+
+// Function to save attendance confirmation (placeholder)
+function saveAttendanceConfirmation() {
+    // Implementation for saving attendance confirmation
+    console.log('Saving attendance confirmation...');
+}
+
+// Function to add stock item (placeholder)
+function addStockItem() {
+    // Implementation for adding stock item
+    console.log('Adding stock item...');
+}
+
+// Function to process stock adjustment (placeholder)
+function processStockAdjustment() {
+    // Implementation for processing stock adjustment
+    console.log('Processing stock adjustment...');
+}
+
+// Function to add material selection (placeholder)
+function addMaterialSelection(type) {
+    // Implementation for adding material selection
+    console.log('Adding material selection...', type);
+}
+
+// Function to delete mural item confirm (placeholder)
+function deleteMuralItemConfirm(id) {
+    // Implementation for deleting mural item
+    console.log('Deleting mural item:', id);
+}
+
+// Function to add new funcionario (placeholder)
+function addNewFuncionario() {
+    // Implementation for adding new funcionario
+    console.log('Adding new funcionario...');
+}
+
+// Function to populate new funcionario role select (placeholder)
 function populateNewFuncionarioRoleSelect() {
-    const roleSelect = document.getElementById('new-funcionario-role');
-    if (!roleSelect) return;
-
-    roleSelect.innerHTML = '<option value="">Selecione um Cargo</option>';
-
-    const roleMap = {
-        'director': 'Diretoria',
-        'coordinator_madre': 'Coordenador(a) Madre',
-        'coordinator_floresta': 'Coordenador(a) Floresta',
-        'staff': 'Funcionário(a) Geral',
-        'receptionist': 'Recepcionista',
-        'psychologist': 'Psicólogo(a)',
-        'psychopedagogue': 'Psicopedagogo(a)',
-        'musictherapist': 'Musicoterapeuta',
-        'speech_therapist': 'Fonoaudiólogo(a)',
-        'nutritionist': 'Nutricionista',
-        'physiotherapist': 'Fisioterapeuta',
-        'financeiro': 'Financeiro',
-        'intern': 'Estagiário(a)'
-    };
-
-    const predefinedRoles = Object.entries(roleMap).map(([id, name]) => ({ id, name }));
-    const customRoles = db.roles.filter(r => r.isCustom);
-    const allRoles = [...predefinedRoles, ...customRoles].sort((a, b) => a.name.localeCompare(b.name));
-
-    allRoles.forEach(role => {
-        const option = document.createElement('option');
-        option.value = role.id;
-        option.textContent = role.name;
-        roleSelect.appendChild(option);
-    });
+    // Implementation for populating role select
+    console.log('Populating role select...');
 }
 
-function populateDemoCredentials() {
-    const demoList = document.getElementById('demo-credentials-list');
-    if (!demoList) return;
+// Function to add general document (placeholder)
+function addGeneralDocument() {
+    // Implementation for adding general document
+    console.log('Adding general document...');
+}
 
-    demoList.innerHTML = '';
+// Function to add general note (placeholder)
+function addGeneralNote() {
+    // Implementation for adding general note
+    console.log('Adding general note...');
+}
 
-    const roleMap = {
-        'director': 'Diretoria (Acesso Total)',
-        'financeiro': 'Financeiro',
-        'coordinator_madre': 'Coord. Madre',
-        'coordinator_floresta': 'Coord. Floresta',
-        'staff': 'Funcionário(a) Geral',
-        'receptionist': 'Recepcionista',
-        'psychologist': 'Psicólogo(a)',
-        'psychopedagogue': 'Psicopedagogo(a)',
-        'musictherapist': 'Musicoterapeuta',
-        'speech_therapist': 'Fonoaudiólogo(a)',
-        'nutritionist': 'Nutricionista',
-        'physiotherapist': 'Fisioterapeuta',
-        'intern': 'Estagiário(a)'
-    };
+// Function to populate meeting attendees (placeholder)
+function populateMeetingAttendees() {
+    // Implementation for populating meeting attendees
+    console.log('Populating meeting attendees...');
+}
 
-    // Filter out entries that are explicitly null or empty
-    const filteredUsersForDemo = db.users.filter(user => user.username && user.password);
+// Function to add meeting alert (placeholder)
+function addMeetingAlert() {
+    // Implementation for adding meeting alert
+    console.log('Adding meeting alert...');
+}
 
-    const sortedUsers = [...filteredUsersForDemo].sort((a, b) => {
-        const roleA = roleMap[a.role] || a.role; // Use original role or raw if custom
-        const roleB = roleMap[b.role] || b.role; // Use original role or raw if custom
-        if (roleA < roleB) return -1;
-        if (roleA > roleB) return 1;
-        return a.name.localeCompare(b.name);
-    });
+// Function to render general documents (placeholder)
+function renderGeneralDocuments(search, filter) {
+    // Implementation for rendering general documents
+    console.log('Rendering general documents...', search, filter);
+}
 
-    sortedUsers.forEach(user => {
-        const li = document.createElement('li');
-        // Display mapped role or just the raw role if it's a custom one
-        const roleText = roleMap[user.role] || user.role;
-        li.innerHTML = `<strong>${roleText}:</strong> ${user.username} / ${user.password}`;
-        demoList.appendChild(li);
-    });
+// Function to generate employee report (placeholder)
+function generateEmployeeReport(id, period) {
+    // Implementation for generating employee report
+    console.log('Generating employee report...', id, period);
+}
+
+// Function to mark notifications as read (placeholder)
+function markNotificationsAsRead() {
+    // Implementation for marking notifications as read
+    console.log('Marking notifications as read...');
+}
+
+// Function to update user password (placeholder)
+function updateUserPassword(userId, newPassword) {
+    // Implementation for updating user password
+    console.log('Updating user password...', userId);
+    return true; // Return success for now
 }

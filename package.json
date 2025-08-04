@@ -1,11 +1,15 @@
 {
-  "name": "fundacao-dom-bosco-api",
+  "name": "fundacao-dom-bosco",
   "version": "1.0.0",
-  "description": "API Node.js para Fundação Dom Bosco",
-  "main": "api-node/server.js",
+  "description": "Sistema de Gestão da Fundação Dom Bosco - Frontend e API",
+  "main": "server-frontend.js",
   "scripts": {
-    "start": "node api-node/server.js",
-    "dev": "api-node/node_modules/.bin/nodemon server.js"
+    "start": "node server-frontend.js",
+    "frontend": "node server-frontend.js",
+    "backend": "node api-node/server.js",
+    "api": "node api-node/server.js",
+    "dev-frontend": "nodemon server-frontend.js",
+    "dev-backend": "nodemon api-node/server.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -16,5 +20,13 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
-  }
+  },
+  "keywords": [
+    "fundacao",
+    "dom-bosco",
+    "gestao",
+    "neuropsicologia"
+  ],
+  "author": "Fundação Dom Bosco",
+  "license": "MIT"
 }
