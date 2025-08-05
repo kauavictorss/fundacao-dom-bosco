@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: dom-bosco
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dom_bosco
+    username: postgres
+    password: Ka.54123
+  jpa.hibernate.ddl-auto: validate
+  flyway:
+    baseline-on-migrate: true
+
+server:
+  port: 8081
+  error:
+    include-stacktrace: never
