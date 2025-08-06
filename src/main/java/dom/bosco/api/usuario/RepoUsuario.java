@@ -36,4 +36,6 @@ public interface RepoUsuario extends JpaRepository<Usuario, Long> {
             where u.cpf = :cpf
             """)
     List<Usuario> findByCpf(String cpf);
+
+    Usuario findByNome(String nome);
 }

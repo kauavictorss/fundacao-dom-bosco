@@ -1,5 +1,6 @@
-package dom.bosco.api.usuario;
+package dom.bosco.api.usuario.service;
 
+import dom.bosco.api.usuario.RepoUsuario;
 import dom.bosco.api.usuario.dto.DtoCadastrarUsuario;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

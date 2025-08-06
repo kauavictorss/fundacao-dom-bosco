@@ -1,5 +1,6 @@
 package dom.bosco.api.usuario.model;
 
+import dom.bosco.api.usuario.dto.DtoAtualizarUsuario;
 import dom.bosco.api.usuario.dto.DtoCadastrarUsuario;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
@@ -79,5 +80,36 @@ public class Usuario {
     @PreUpdate
     protected void onUpdate() {
         atualizadoEm = LocalDateTime.now();
+    }
+
+    public void atualizarDados(@Valid DtoAtualizarUsuario dados) {
+        if (dados.usuario() != null) {
+            this.usuario = dados.usuario();
+        }
+        if (dados.senha() != null) {
+            this.senha = dados.senha();
+        }
+        if (dados.nome() != null) {
+            this.nome = dados.nome();
+        }
+        if (dados.cpf() != null) {
+            this.cpf = dados.cpf();
+        }
+        if (dados.email() != null) {
+            this.email = dados.email();
+        }
+        if (dados.celular() != null) {
+            this.celular = dados.celular();
+        }
+        if (dados.cargo() != null) {
+            this.cargo = dados.cargo();
+        }
+        if (dados.endereco() != null) {
+            this.endereco = dados.endereco();
+        }
+    }
+
+    public void excuir() {
+        this.ativo = false;
     }
 }

@@ -1,9 +1,11 @@
 package dom.bosco.api.usuario;
 
+import dom.bosco.api.usuario.dto.DtoAtualizarUsuario;
 import dom.bosco.api.usuario.dto.DtoCadastrarUsuario;
 import dom.bosco.api.usuario.dto.DtoDetalhamentoUsuario;
 import dom.bosco.api.usuario.dto.DtoListarUsuario;
 import dom.bosco.api.usuario.model.Usuario;
+import dom.bosco.api.usuario.service.ValidadorCadastroUsuario;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,5 +62,23 @@ public class RestUsuario {
     @GetMapping("/buscar/cpf/{cpf}")
     public List<DtoListarUsuario> buscarUsuarioPorCpf(@PathVariable String cpf) {
         return repositorio.findByCpf(cpf).stream().map(DtoListarUsuario::new).toList();
+    }
+
+    @PutMapping("/atualizar")
+    @Transactional
+    public ResponseEntity<DtoDetalhamentoUsuario> atualizarUsuario(@RequestBody @Valid DtoAtualizarUsuario dados) {
+        var usuario = repositorio.getReferenceById(dados.id());
+        usuario.atualizarDados(dados);
+        return ResponseEntity.ok(new DtoDetalhamentoUsuario(usuario));
+    }
+
+    @DeleteMapping("/remover/{id}")
+    @Transactional
+    public ResponseEntity<Void> removerUsuario(@PathVariable Long id) {
+        var usuario = repositorio.getReferenceById(id);
+        usuario.excuir();
+        log.info("Removendo usuário(a) {} com id: {}",usuario.getNome(), id);
+        log.info("Usuário removido com sucesso!");
+        return ResponseEntity.noContent().build();
     }
 }
