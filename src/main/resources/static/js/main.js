@@ -1,6 +1,6 @@
 // Main application entry point
-import { loadDb, saveDb, db } from './database.js';
-import { login, logout, checkLogin, getCurrentUser, isRoleAllowed, DIRECTOR_ONLY, FINANCE_ONLY, DIRECTOR_OR_FINANCE, STOCK_MANAGERS, ALL_USERS, PROFESSIONAL_ROLES, COORDINATOR_AND_HIGHER, NON_FINANCE_ACCESS, ALL_ADMIN_VIEW_CLIENTS_AND_EMPLOYEES, DIRECTOR_AND_PROFESSIONALS, DIRECTOR_AND_COORDINATORS_ONLY_DOCUMENTS, checkTabAccess } from './auth.js';
+// import { loadDb, saveDb, db } from './database.js'; // Removido - Não usamos mais o DB local
+//import { login, logout, checkLogin, getCurrentUser, isRoleAllowed, DIRECTOR_ONLY, FINANCE_ONLY, DIRECTOR_OR_FINANCE, STOCK_MANAGERS, ALL_USERS, PROFESSIONAL_ROLES, COORDINATOR_AND_HIGHER, NON_FINANCE_ACCESS, ALL_ADMIN_VIEW_CLIENTS_AND_EMPLOYEES, DIRECTOR_AND_PROFESSIONALS, DIRECTOR_AND_COORDINATORS_ONLY_DOCUMENTS, checkTabAccess } from './auth.js';
 import { showLoginScreen, showMainApp, switchTab, updateCurrentDate, showNotification } from './ui.js';
 import { renderClientList, showClientDetails, addClientNote, addClientDocument, deleteClientDocument, renderMeusPacientes, renderClientReport, showAssignProfessionalModal, assignProfessionalToClient, unassignProfessionalFromClient, deleteClient } from './clients.js';
 import { renderSchedule, updateScheduleStatus, initializeCalendar, renderCalendar, saveEditedSchedule, cancelScheduleWithReason, reassignSchedule, populateAssignableUsers, serviceNames, editSchedule, saveReassignedSchedule } from './schedule.js';
@@ -120,12 +120,13 @@ function setupMobileGestures() {
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
-    loadDb();
+    // loadDb(); // Removido - Não carregamos mais dados do localStorage ao iniciar.
 
     if (checkLogin()) {
         showMainApp();
         initializeApp();
-        checkNotifications();
+        // checkNotifications(); // TODO: A lógica de notificação também precisa ser migrada para a API
+        resetIdleTimer(); // Start idle timer on successful login
     } else {
         showLoginScreen();
     }
@@ -206,6 +207,10 @@ function setupGlobalSearch() {
     const populateDatalist = () => {
         searchDatalist.innerHTML = '';
 
+        // TODO: Esta lógica precisa ser refatorada para buscar dados da API.
+        console.warn("A funcionalidade de busca global precisa ser conectada à API.");
+
+        /*
         // Add Patients
         db.clients.forEach(client => {
             const option = document.createElement('option');
@@ -226,6 +231,7 @@ function setupGlobalSearch() {
             option.value = `Estoque: ${item.name} (ID: ${item.id})`;
             searchDatalist.appendChild(option);
         });
+        */
     };
 
     // Populate once on load
@@ -235,6 +241,7 @@ function setupGlobalSearch() {
         const query = searchInput.value.trim();
         if (!query) return;
 
+        // TODO: A lógica de busca também precisa ser adaptada para a API.
         const match = query.match(/^(Paciente|Funcionário|Estoque): .+\(ID: (\d+)\)$/);
 
         if (match && match[1] && match[2]) {
@@ -284,16 +291,19 @@ function setupEventListeners() {
     document.addEventListener('scroll', resetIdleTimer);
     // --- End Inactivity Logout Event Listeners ---
 
-    document.getElementById('form-login').addEventListener('submit', (e) => {
+    document.getElementById('form-login').addEventListener('submit', async (e) => { // A função agora é async
         e.preventDefault();
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
 
-        if (login(username, password)) {
+        // A função login agora é assíncrona e retorna uma Promise
+        const success = await login(username, password);
+
+        if (success) {
             document.getElementById('form-login').reset();
             showMainApp();
             initializeApp();
-            checkNotifications();
+            // checkNotifications(); // TODO: A lógica de notificação também precisa ser migrada para a API
             resetIdleTimer(); // Start idle timer on successful login
         } else {
             showNotification('Usuário ou senha inválidos!', 'error');

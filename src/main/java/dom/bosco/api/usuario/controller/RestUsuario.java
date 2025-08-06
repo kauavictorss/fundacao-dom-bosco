@@ -1,5 +1,6 @@
-package dom.bosco.api.usuario;
+package dom.bosco.api.usuario.controller;
 
+import dom.bosco.api.usuario.RepoUsuario;
 import dom.bosco.api.usuario.dto.DtoAtualizarUsuario;
 import dom.bosco.api.usuario.dto.DtoCadastrarUsuario;
 import dom.bosco.api.usuario.dto.DtoDetalhamentoUsuario;

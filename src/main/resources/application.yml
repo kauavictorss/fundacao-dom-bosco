@@ -1,6 +1,8 @@
+#Configurações da aplicação
 spring:
   application:
     name: dom-bosco
+  #Configurações do banco de dados
   datasource:
     url: jdbc:postgresql://localhost:5432/dom_bosco
     username: postgres
@@ -8,7 +10,12 @@ spring:
   jpa.hibernate.ddl-auto: validate
   flyway:
     baseline-on-migrate: true
-
+#Configurações do JPA/Hibernate
+  jpa:
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+#Configurações do servidor
 server:
   port: 8081
   error:

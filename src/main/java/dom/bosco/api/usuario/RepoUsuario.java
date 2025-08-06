@@ -1,14 +1,13 @@
 package dom.bosco.api.usuario;
 
 import dom.bosco.api.usuario.model.Usuario;
-import jakarta.validation.constraints.Pattern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface RepoUsuario extends JpaRepository<Usuario, Long> {
 
@@ -37,5 +36,5 @@ public interface RepoUsuario extends JpaRepository<Usuario, Long> {
             """)
     List<Usuario> findByCpf(String cpf);
 
-    Usuario findByNome(String nome);
+    UserDetails findByUsuario(String usuario);
 }
