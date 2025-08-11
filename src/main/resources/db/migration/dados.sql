@@ -39,44 +39,14 @@ CREATE TABLE permissoes_usuario (
     UNIQUE(usuario_id, aba)
 );
 
--- Tabela base para todos os clientes
-CREATE TABLE clientes (
+-- Tabela para clientes adultos (baseada na entidade ClienteAdt)
+CREATE TABLE cliente_adt (
     id BIGSERIAL NOT NULL PRIMARY KEY,
-    ativo BOOLEAN NOT NULL DEFAULT true,
-    nome VARCHAR(255) NOT NULL,
-    data_nascimento DATE NOT NULL,
-    genero VARCHAR(50) NOT NULL,
-    unidade_atendimento VARCHAR(50) CHECK (unidade_atendimento IN ('madre', 'floresta')),
-    cep VARCHAR(20),
-    logradouro VARCHAR(255),
-    numero_endereco VARCHAR(50),
-    complemento VARCHAR(255),
-    bairro VARCHAR(255),
-    cidade VARCHAR(255),
-    estado VARCHAR(50),
-    observacoes_gerais TEXT,
-    diagnostico_principal TEXT,
-    historico_medico TEXT,
-    queixa_neuropsicologica TEXT,
-    expectativas_tratamento TEXT,
-    tipo_cliente VARCHAR(31) NOT NULL CHECK (tipo_cliente IN ('adult', 'minor')),
-    criado_por_usuario_id BIGINT,
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (criado_por_usuario_id) REFERENCES usuarios(id)
-);
-
--- Tabela para histórico de alterações dos clientes (para compatibilidade com @ElementCollection)
-CREATE TABLE cliente_historico (
-    cliente_id BIGINT NOT NULL,
-    alteracao TEXT NOT NULL,
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
-);
-
--- Tabela para clientes maiores de idade
-CREATE TABLE clientes_adultos (
-    id BIGINT NOT NULL PRIMARY KEY,
-    cpf VARCHAR(20) NOT NULL,
+    ativo BOOLEAN DEFAULT true,
+    nome_complet VARCHAR(255) NOT NULL,
+    dt_nascimento DATE NOT NULL,
+    generalidade VARCHAR(50) NOT NULL,
+    cpf VARCHAR(20),
     rg VARCHAR(20),
     naturalidade VARCHAR(255),
     estado_civil VARCHAR(50),
@@ -84,13 +54,37 @@ CREATE TABLE clientes_adultos (
     profissao VARCHAR(255),
     email VARCHAR(255),
     telefone VARCHAR(20),
-    contato_emergencia VARCHAR(500),
-    FOREIGN KEY (id) REFERENCES clientes(id) ON DELETE CASCADE
+    contato_emergencia TEXT,
+    obsv_gerais TEXT,
+    diagnostic_principal TEXT,
+    historic_medico TEXT,
+    qx_neuropsicologica TEXT,
+    expctv_tratamento TEXT,
+    unidade_atdmt VARCHAR(50),
+    cep VARCHAR(20),
+    logradouro VARCHAR(255),
+    numero_endereco VARCHAR(50),
+    complemento VARCHAR(255),
+    bairro VARCHAR(255),
+    cidade VARCHAR(255),
+    estado VARCHAR(50),
+    criado_por_usuario_id BIGINT,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (criado_por_usuario_id) REFERENCES usuarios(id)
 );
 
--- Tabela para clientes menores de idade
-CREATE TABLE clientes_menores (
-    id BIGINT NOT NULL PRIMARY KEY,
+ALTER TABLE cliente_adt
+    ALTER COLUMN cpf SET NOT NULL,
+    ALTER COLUMN unidade_atdmt SET NOT NULL;
+
+-- Tabela para clientes menores (baseada na entidade ClienteMnr)
+CREATE TABLE cliente_mnr (
+    id BIGSERIAL NOT NULL PRIMARY KEY,
+    ativo BOOLEAN DEFAULT true,
+    nome_completo VARCHAR(255) NOT NULL,
+    data_nascimento DATE NOT NULL,
+    genero VARCHAR(50) NOT NULL,
     nome_escola VARCHAR(255),
     tipo_escola VARCHAR(50),
     ano_escolar VARCHAR(50),
@@ -101,20 +95,55 @@ CREATE TABLE clientes_menores (
     nome_mae VARCHAR(255),
     idade_mae INTEGER,
     profissao_mae VARCHAR(255),
-    telefone_mae VARCHAR(20),
+    telefone_mae VARCHAR(20) NOT NULL,
     responsavel_financeiro VARCHAR(100),
-    outro_responsavel VARCHAR(500),
-    FOREIGN KEY (id) REFERENCES clientes(id) ON DELETE CASCADE
+    outro_responsavel TEXT,
+    observacoes_gerais TEXT,
+    diagnostico_principal TEXT,
+    historico_medico TEXT,
+    queixa_neuropsicologica TEXT,
+    expectativas_tratamento TEXT,
+    unidade_atendimento VARCHAR(50) NOT NULL,
+    cep VARCHAR(20),
+    logradouro VARCHAR(255),
+    numero_endereco VARCHAR(50),
+    complemento VARCHAR(255),
+    bairro VARCHAR(255),
+    cidade VARCHAR(255),
+    estado VARCHAR(50),
+    criado_por_usuario_id BIGINT,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (criado_por_usuario_id) REFERENCES usuarios(id)
 );
 
--- Tabela de vínculo entre profissionais e clientes
-CREATE TABLE vinculo_profissional_cliente (
+ALTER TABLE cliente_mnr
+    ALTER COLUMN nome_pai SET NOT NULL,
+    ALTER COLUMN nome_mae SET NOT NULL,
+    ALTER COLUMN telefone_pai SET NOT NULL,
+    ALTER COLUMN telefone_mae SET NOT NULL,
+    ALTER COLUMN unidade_atendimento SET NOT NULL;
+
+-- Tabela de vínculo entre profissionais e clientes adultos
+CREATE TABLE vinculo_profissional_cliente_adulto (
     id BIGSERIAL NOT NULL PRIMARY KEY,
     cliente_id BIGINT NOT NULL,
     profissional_id BIGINT NOT NULL,
     ativo BOOLEAN DEFAULT true,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+    FOREIGN KEY (cliente_id) REFERENCES cliente_adt(id) ON DELETE CASCADE,
+    FOREIGN KEY (profissional_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    UNIQUE(cliente_id, profissional_id)
+);
+
+-- Tabela de vínculo entre profissionais e clientes menores
+CREATE TABLE vinculo_profissional_cliente_menor (
+    id BIGSERIAL NOT NULL PRIMARY KEY,
+    cliente_id BIGINT NOT NULL,
+    profissional_id BIGINT NOT NULL,
+    ativo BOOLEAN DEFAULT true,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES cliente_mnr(id) ON DELETE CASCADE,
     FOREIGN KEY (profissional_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     UNIQUE(cliente_id, profissional_id)
 );
@@ -122,7 +151,8 @@ CREATE TABLE vinculo_profissional_cliente (
 -- Tabela de agendamentos
 CREATE TABLE agendamentos (
     id BIGSERIAL NOT NULL PRIMARY KEY,
-    cliente_id BIGINT NOT NULL,
+    cliente_adulto_id BIGINT,
+    cliente_menor_id BIGINT,
     profissional_id BIGINT,
     data DATE NOT NULL,
     hora_inicio TIME NOT NULL,
@@ -135,14 +165,18 @@ CREATE TABLE agendamentos (
     comprovante_cancelamento TEXT, -- Para armazenar base64 de imagens
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
-    FOREIGN KEY (profissional_id) REFERENCES usuarios(id)
+    FOREIGN KEY (cliente_adulto_id) REFERENCES cliente_adt(id) ON DELETE CASCADE,
+    FOREIGN KEY (cliente_menor_id) REFERENCES cliente_mnr(id) ON DELETE CASCADE,
+    FOREIGN KEY (profissional_id) REFERENCES usuarios(id),
+    CHECK ((cliente_adulto_id IS NOT NULL AND cliente_menor_id IS NULL) OR
+           (cliente_adulto_id IS NULL AND cliente_menor_id IS NOT NULL))
 );
 
 -- Tabela de atendimentos realizados
 CREATE TABLE atendimentos (
     id BIGSERIAL NOT NULL PRIMARY KEY,
-    cliente_id BIGINT NOT NULL,
+    cliente_adulto_id BIGINT,
+    cliente_menor_id BIGINT,
     profissional_id BIGINT,
     agendamento_id BIGINT,
     data DATE NOT NULL,
@@ -152,9 +186,12 @@ CREATE TABLE atendimentos (
     duracao_minutos INTEGER,
     anexos JSONB, -- Para armazenar múltiplos arquivos anexados
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+    FOREIGN KEY (cliente_adulto_id) REFERENCES cliente_adt(id) ON DELETE CASCADE,
+    FOREIGN KEY (cliente_menor_id) REFERENCES cliente_mnr(id) ON DELETE CASCADE,
     FOREIGN KEY (profissional_id) REFERENCES usuarios(id),
-    FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id)
+    FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id),
+    CHECK ((cliente_adulto_id IS NOT NULL AND cliente_menor_id IS NULL) OR
+           (cliente_adulto_id IS NULL AND cliente_menor_id IS NOT NULL))
 );
 
 -- Tabela de materiais utilizados em atendimentos
@@ -169,19 +206,24 @@ CREATE TABLE materiais_atendimento (
 -- Tabela de notas dos clientes
 CREATE TABLE notas_clientes (
     id BIGSERIAL NOT NULL PRIMARY KEY,
-    cliente_id BIGINT NOT NULL,
+    cliente_adulto_id BIGINT,
+    cliente_menor_id BIGINT,
     titulo VARCHAR(500) NOT NULL,
     conteudo TEXT NOT NULL,
     criado_por_usuario_id BIGINT,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
-    FOREIGN KEY (criado_por_usuario_id) REFERENCES usuarios(id)
+    FOREIGN KEY (cliente_adulto_id) REFERENCES cliente_adt(id) ON DELETE CASCADE,
+    FOREIGN KEY (cliente_menor_id) REFERENCES cliente_mnr(id) ON DELETE CASCADE,
+    FOREIGN KEY (criado_por_usuario_id) REFERENCES usuarios(id),
+    CHECK ((cliente_adulto_id IS NOT NULL AND cliente_menor_id IS NULL) OR
+           (cliente_adulto_id IS NULL AND cliente_menor_id IS NOT NULL))
 );
 
 -- Tabela de documentos dos clientes
 CREATE TABLE documentos_clientes (
     id BIGSERIAL NOT NULL PRIMARY KEY,
-    cliente_id BIGINT NOT NULL,
+    cliente_adulto_id BIGINT,
+    cliente_menor_id BIGINT,
     titulo VARCHAR(500) NOT NULL,
     tipo_documento VARCHAR(100) NOT NULL,
     nome_arquivo VARCHAR(500) NOT NULL,
@@ -189,8 +231,11 @@ CREATE TABLE documentos_clientes (
     descricao TEXT,
     criado_por_usuario_id BIGINT,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
-    FOREIGN KEY (criado_por_usuario_id) REFERENCES usuarios(id)
+    FOREIGN KEY (cliente_adulto_id) REFERENCES cliente_adt(id) ON DELETE CASCADE,
+    FOREIGN KEY (cliente_menor_id) REFERENCES cliente_mnr(id) ON DELETE CASCADE,
+    FOREIGN KEY (criado_por_usuario_id) REFERENCES usuarios(id),
+    CHECK ((cliente_adulto_id IS NOT NULL AND cliente_menor_id IS NULL) OR
+           (cliente_adulto_id IS NULL AND cliente_menor_id IS NOT NULL))
 );
 
 -- Tabela de itens do estoque
@@ -291,25 +336,34 @@ CREATE TABLE historico_alteracoes (
 
 -- Índices para agendamentos
 CREATE INDEX idx_agendamentos_data ON agendamentos(data);
-CREATE INDEX idx_agendamentos_cliente ON agendamentos(cliente_id);
+CREATE INDEX idx_agendamentos_cliente_adulto ON agendamentos(cliente_adulto_id);
+CREATE INDEX idx_agendamentos_cliente_menor ON agendamentos(cliente_menor_id);
 CREATE INDEX idx_agendamentos_profissional ON agendamentos(profissional_id);
 CREATE INDEX idx_agendamentos_status ON agendamentos(status);
 CREATE INDEX idx_agendamentos_unidade ON agendamentos(unidade_atendimento);
 
 -- Índices para atendimentos
 CREATE INDEX idx_atendimentos_data ON atendimentos(data);
-CREATE INDEX idx_atendimentos_cliente ON atendimentos(cliente_id);
+CREATE INDEX idx_atendimentos_cliente_adulto ON atendimentos(cliente_adulto_id);
+CREATE INDEX idx_atendimentos_cliente_menor ON atendimentos(cliente_menor_id);
 CREATE INDEX idx_atendimentos_profissional ON atendimentos(profissional_id);
 
--- Índices para clientes
-CREATE INDEX idx_clientes_nome ON clientes(nome);
-CREATE INDEX idx_clientes_tipo ON clientes(tipo_cliente);
-CREATE INDEX idx_clientes_unidade ON clientes(unidade_atendimento);
-CREATE INDEX idx_clientes_adultos_cpf ON clientes_adultos(cpf);
+-- Índices para clientes adultos
+CREATE INDEX idx_cliente_adt_nome ON cliente_adt(nome_complet);
+CREATE INDEX idx_cliente_adt_cpf ON cliente_adt(cpf);
+CREATE INDEX idx_cliente_adt_email ON cliente_adt(email);
+CREATE INDEX idx_cliente_adt_unidade ON cliente_adt(unidade_atdmt);
+
+-- Índices para clientes menores
+CREATE INDEX idx_cliente_mnr_nome ON cliente_mnr(nome_completo);
+CREATE INDEX idx_cliente_mnr_unidade ON cliente_mnr(unidade_atendimento);
+CREATE INDEX idx_cliente_mnr_escola ON cliente_mnr(nome_escola);
 
 -- Índices para vínculos
-CREATE INDEX idx_vinculo_cliente ON vinculo_profissional_cliente(cliente_id);
-CREATE INDEX idx_vinculo_profissional ON vinculo_profissional_cliente(profissional_id);
+CREATE INDEX idx_vinculo_adulto_cliente ON vinculo_profissional_cliente_adulto(cliente_id);
+CREATE INDEX idx_vinculo_adulto_profissional ON vinculo_profissional_cliente_adulto(profissional_id);
+CREATE INDEX idx_vinculo_menor_cliente ON vinculo_profissional_cliente_menor(cliente_id);
+CREATE INDEX idx_vinculo_menor_profissional ON vinculo_profissional_cliente_menor(profissional_id);
 
 -- Índices para estoque
 CREATE INDEX idx_estoque_categoria ON estoque_itens(categoria);
@@ -347,8 +401,13 @@ CREATE TRIGGER trigger_usuarios_timestamp
     FOR EACH ROW
     EXECUTE FUNCTION atualizar_timestamp();
 
-CREATE TRIGGER trigger_clientes_timestamp
-    BEFORE UPDATE ON clientes
+CREATE TRIGGER trigger_cliente_adt_timestamp
+    BEFORE UPDATE ON cliente_adt
+    FOR EACH ROW
+    EXECUTE FUNCTION atualizar_timestamp();
+
+CREATE TRIGGER trigger_cliente_mnr_timestamp
+    BEFORE UPDATE ON cliente_mnr
     FOR EACH ROW
     EXECUTE FUNCTION atualizar_timestamp();
 
@@ -367,7 +426,6 @@ CREATE TRIGGER trigger_estoque_timestamp
 -- ====================================================
 
 COMMENT ON TABLE usuarios IS 'Tabela unificada para todos os usuários do sistema (funcionários, estagiários, coordenadores, etc.)';
-COMMENT ON TABLE clientes IS 'Tabela principal para pacientes, tanto adultos quanto menores';
 COMMENT ON TABLE agendamentos IS 'Agendamentos de consultas e atendimentos';
 COMMENT ON TABLE atendimentos IS 'Registro de atendimentos realizados';
 COMMENT ON TABLE estoque_itens IS 'Controle de materiais e equipamentos da clínica';

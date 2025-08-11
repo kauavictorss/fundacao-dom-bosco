@@ -1,5 +1,6 @@
 package dom.bosco.api.endereco;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,7 @@ public class Endereco {
 
     private String cep;
     private String logradouro;
+    @Column(name = "numero_endereco")
     private String numero;
     private String complemento;
     private String bairro;

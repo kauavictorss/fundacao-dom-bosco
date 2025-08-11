@@ -3,6 +3,7 @@ package dom.bosco.api.agendamento;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,6 +17,7 @@ import java.time.LocalTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 @Table(name = "agendamentos")
 public class Agendamento {
 
@@ -23,9 +25,12 @@ public class Agendamento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
-    @Column(name = "cliente_id")
-    private Long clienteId;
+    // CAMPOS PARA CLIENTES SEPARADOS
+    @Column(name = "cliente_adulto_id")
+    private Long clienteAdultoId;
+
+    @Column(name = "cliente_menor_id")
+    private Long clienteMenorId;
 
     @Column(name = "profissional_id")
     private Long profissionalId;
@@ -77,5 +82,28 @@ public class Agendamento {
     @PreUpdate
     protected void onUpdate() {
         atualizadoEm = LocalDateTime.now();
+    }
+
+    // MÉTODOS AUXILIARES PARA VERIFICAR TIPO DE CLIENTE
+    public boolean isClienteAdulto() {
+        return clienteAdultoId != null;
+    }
+
+    public boolean isClienteMenor() {
+        return clienteMenorId != null;
+    }
+
+    public Long getClienteId() {
+        return isClienteAdulto() ? clienteAdultoId : clienteMenorId;
+    }
+
+    public void setClienteAdulto(Long clienteId) {
+        this.clienteAdultoId = clienteId;
+        this.clienteMenorId = null; // Garantir exclusividade
+    }
+
+    public void setClienteMenor(Long clienteId) {
+        this.clienteMenorId = clienteId;
+        this.clienteAdultoId = null; // Garantir exclusividade
     }
 }
