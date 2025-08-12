@@ -1,7 +1,7 @@
-package dom.bosco.api.cliente.adulto;
+package dom.bosco.api.cliente.menor;
 
-import dom.bosco.api.cliente.adulto.dto.DtoCadastroClienteAdt;
-import dom.bosco.api.cliente.adulto.dto.DtoDetalharClienteAdt;
+import dom.bosco.api.cliente.menor.dto.DtoCadastroClienteMnr;
+import dom.bosco.api.cliente.menor.dto.DtoDetalharClienteMnr;
 import dom.bosco.api.usuario.model.Usuario;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -17,14 +17,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Slf4j
 @CrossOrigin()
 @RequiredArgsConstructor
-@RequestMapping("/cliente-adulto")
-public class RestClienteAdulto {
+@RequestMapping("/cliente-menor")
+public class RestClienteMnr {
 
-    private final RepoClienteAdt repositorio;
+    private final RepoClienteMnr repositorio;
 
     @PostMapping
     @Transactional
-    public ResponseEntity<DtoDetalharClienteAdt> cadastrar(@RequestBody @Valid DtoCadastroClienteAdt dados, UriComponentsBuilder uriBuilder, HttpServletRequest request) {
+    public ResponseEntity<DtoDetalharClienteMnr> cadastrar(@RequestBody @Valid DtoCadastroClienteMnr dados, UriComponentsBuilder uriBuilder, HttpServletRequest request) {
         log.info("Cadastrando Cliente Adulto: {}", dados.nome());
 
         try {
@@ -38,15 +38,15 @@ public class RestClienteAdulto {
             }
 
             // Criar cliente e vincular ao usuário logado
-            var clienteAdt = new ClienteAdt(dados);
-            clienteAdt.setCriadoPorUsuarioId(usuarioLogado.getId());
+            var clienteMnr = new ClienteMnr(dados);
+            clienteMnr.setCriadoPorUsuarioId(usuarioLogado.getId());
 
-            repositorio.save(clienteAdt);
+            repositorio.save(clienteMnr);
 
-            var uri = uriBuilder.path("/cliente-adulto/{id}").buildAndExpand(clienteAdt.getId()).toUri();
+            var uri = uriBuilder.path("/cliente-menor/{id}").buildAndExpand(clienteMnr.getId()).toUri();
 
-            log.info("Cliente adulto cadastrado com sucesso! ID: {} - Nome: {} - Criado por: {}", clienteAdt.getId(), clienteAdt.getNome(), usuarioLogado.getNome());
-            return ResponseEntity.created(uri).body(new DtoDetalharClienteAdt(clienteAdt));
+            log.info("Cliente adulto cadastrado com sucesso! ID: {} - Nome: {} - Criado por: {}", clienteMnr.getId(), clienteMnr.getNome(), usuarioLogado.getNome());
+            return ResponseEntity.created(uri).body(new DtoDetalharClienteMnr(clienteMnr));
 
         } catch (Exception e) {
             log.error("Erro ao cadastrar cliente adulto: {}", e.getMessage(), e);
@@ -55,9 +55,9 @@ public class RestClienteAdulto {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DtoDetalharClienteAdt> detalhar(@PathVariable Long id) {
+    public ResponseEntity<DtoDetalharClienteMnr> detalhar(@PathVariable Long id) {
         var cliente = repositorio.findById(id);
 
-        return cliente.map(clienteAdt -> ResponseEntity.ok(new DtoDetalharClienteAdt(clienteAdt))).orElseGet(() -> ResponseEntity.notFound().build());
+        return cliente.map(clienteMnr -> ResponseEntity.ok(new DtoDetalharClienteMnr(clienteMnr))).orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

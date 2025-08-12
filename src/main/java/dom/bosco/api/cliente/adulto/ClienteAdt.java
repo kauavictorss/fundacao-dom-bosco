@@ -1,8 +1,10 @@
 package dom.bosco.api.cliente.adulto;
 
+import dom.bosco.api.cliente.adulto.dto.DtoCadastroClienteAdt;
 import dom.bosco.api.cliente.model.Unidade;
 import dom.bosco.api.endereco.Endereco;
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -82,4 +84,26 @@ public class ClienteAdt {
 
     @Embedded
     private Endereco endereco;
+
+    public ClienteAdt(@Valid DtoCadastroClienteAdt dados) {
+        this.ativo = true;
+        this.nome = dados.nome();
+        this.dataNascimento = dados.dataNascimento();
+        this.generalidade = dados.generalidade();
+        this.cpf = dados.cpf();
+        this.rg = dados.rg();
+        this.naturalidade = dados.naturalidade();
+        this.estadoCivil = dados.estadoCivil();
+        this.escolaridade = dados.escolaridade();
+        this.profissao = dados.profissao();
+        this.email = dados.email();
+        this.telefone = dados.telefone();
+        this.contatoEmergencia = dados.contatoEmergencia();
+        this.observacoesGerais = dados.observacoesGerais();
+        this.diagnosticoPrincipal = dados.diagnosticoPrincipal();
+        this.historicoMedico = dados.historicoMedico();
+        this.queixaNeuropsicologica = dados.queixaNeuropsicologica();
+        this.expectativasTratamento = dados.expectativasTratamento();
+        this.endereco = new Endereco(dados.endereco());
+    }
 }
