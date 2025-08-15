@@ -48,7 +48,7 @@ public class ClienteMnr {
     private String nomePai;
 
     @Column(name = "idade_pai")
-    private Integer idadePai;
+    private int idadePai;
 
     @Column(name = "profissao_pai")
     private String profissaoPai;
@@ -60,7 +60,7 @@ public class ClienteMnr {
     private String nomeMae;
 
     @Column(name = "idade_mae")
-    private Integer idadeMae;
+    private int idadeMae;
 
     @Column(name = "profissao_mae")
     private String profissaoMae;
@@ -122,6 +122,7 @@ public class ClienteMnr {
         this.historicoMedico = dados.historicoMedico();
         this.queixaNeuropsicologica = dados.queixaNeuropsicologica();
         this.expectativasTratamento = dados.expectativasTratamento();
+        this.unidadeAtendimento = dados.unidadeAtendimento();
         this.endereco = new Endereco();
     }
 

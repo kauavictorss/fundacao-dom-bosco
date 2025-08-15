@@ -104,6 +104,7 @@ public class ClienteAdt {
         this.historicoMedico = dados.historicoMedico();
         this.queixaNeuropsicologica = dados.queixaNeuropsicologica();
         this.expectativasTratamento = dados.expectativasTratamento();
+        this.unidadeAtendimento = dados.unidadeAtendimento();
         this.endereco = new Endereco(dados.endereco());
     }
 }

@@ -28,7 +28,6 @@ public class RestAutenticacaoUsuario {
             return ResponseEntity.badRequest().body("Usuário não encontrado");
         }
 
-        // COMPARAÇÃO SIMPLES SEM CRIPTOGRAFIA
         if (!dados.senha().equals(usuario.getSenha())) {
             return ResponseEntity.badRequest().body("Senha incorreta");
         }
@@ -37,7 +36,6 @@ public class RestAutenticacaoUsuario {
             return ResponseEntity.badRequest().body("Usuário inativo");
         }
 
-        // Criar sessão para o usuário logado
         HttpSession session = request.getSession();
         session.setAttribute("usuarioLogado", usuario);
         session.setAttribute("nomeUsuario", usuario.getNome());
