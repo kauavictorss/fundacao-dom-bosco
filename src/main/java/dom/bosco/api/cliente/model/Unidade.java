@@ -4,9 +4,9 @@ public enum Unidade {
     MADRE("Clínica Social (Madre)"),
     FLORESTA("Neuro (Floresta)");
 
-    final String displayName;
+    final String descricao;
 
-    Unidade(String displayName) {
-        this.displayName = displayName;
+    Unidade(String descricao) {
+        this.descricao = descricao;
     }
 }

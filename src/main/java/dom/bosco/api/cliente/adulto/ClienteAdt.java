@@ -24,7 +24,7 @@ public class ClienteAdt {
     @Column(columnDefinition = "BOOLEAN DEFAULT true")
     private Boolean ativo = true;
 
-    @Column(name = "nome_complet")
+    @Column(name = "nome")
     private String nome;
 
     @Column(name = "dt_nascimento")
@@ -63,22 +63,22 @@ public class ClienteAdt {
     @Column(name = "obsv_gerais", columnDefinition = "TEXT")
     private String observacoesGerais;
 
-    @Column(name = "diagnostic_principal", columnDefinition = "TEXT")
+    @Column(name = "diagnostico_principal", columnDefinition = "TEXT")
     private String diagnosticoPrincipal;
 
-    @Column(name = "historic_medico", columnDefinition = "TEXT")
+    @Column(name = "historico_medico", columnDefinition = "TEXT")
     private String historicoMedico;
 
-    @Column(name = "qx_neuropsicologica", columnDefinition = "TEXT")
+    @Column(name = "queixa_neuropsicologica", columnDefinition = "TEXT")
     private String queixaNeuropsicologica;
 
-    @Column(name = "expctv_tratamento", columnDefinition = "TEXT")
+    @Column(name = "expectativa_tratamento", columnDefinition = "TEXT")
     private String expectativasTratamento;
 
     @Column(name = "criado_por_usuario_id")
     private Long criadoPorUsuarioId;
 
-    @Column(name = "unidade_atdmt")
+    @Column(name = "unidade_atendimento")
     @Enumerated(EnumType.STRING)
     private Unidade unidadeAtendimento;
 

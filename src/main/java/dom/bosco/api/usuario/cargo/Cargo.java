@@ -1,46 +1,33 @@
-package dom.bosco.api.estoque;
+package dom.bosco.api.usuario.cargo;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.EnumSet;
+import java.util.Set;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "estoque_itens")
-public class EstoqueItem {
+@Table(name = "cargo")
+public class Cargo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    private String nome;
-
-    private String descricao;
-
-    @Enumerated(EnumType.STRING)
-    private CategoriaItem categoria;
-
-    private Integer quantidade = 0;
-
-    @Column(name = "estoque_minimo")
-    private Integer estoqueMinimo = 5;
-
-    @DecimalMin("0.0")
-    @Column(name = "valor_unitario")
-    private BigDecimal valorUnitario;
-
     private Boolean ativo = true;
+
+    @NotBlank
+    @Column(unique = true)
+    private String nome;
 
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;
@@ -61,6 +48,4 @@ public class EstoqueItem {
     protected void onUpdate() {
         atualizadoEm = LocalDateTime.now();
     }
-
-
 }

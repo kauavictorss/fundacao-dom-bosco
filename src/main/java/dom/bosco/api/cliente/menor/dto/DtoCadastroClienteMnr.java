@@ -16,7 +16,7 @@ public record DtoCadastroClienteMnr(
         @NotBlank String genero,
         String nomeEscola,
         String tipoEscola,
-        String anoEscola,
+        String anoEscolar,
         @NotBlank String nomePai,
         int idadePai,
         @NotBlank String profissaoPai,

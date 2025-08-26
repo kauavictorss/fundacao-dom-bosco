@@ -106,7 +106,7 @@ public class ClienteMnr {
         this.genero = dados.genero();
         this.nomeEscola = dados.nomeEscola();
         this.tipoEscola = dados.tipoEscola();
-        this.anoEscolar = dados.anoEscola();
+        this.anoEscolar = dados.anoEscolar();
         this.nomePai = dados.nomePai();
         this.idadePai = dados.idadePai();
         this.profissaoPai = dados.profissaoPai();
