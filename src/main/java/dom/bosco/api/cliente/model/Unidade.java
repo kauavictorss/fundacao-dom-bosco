@@ -1,12 +1,25 @@
 package dom.bosco.api.cliente.model;
 
+import lombok.Getter;
+
+@Getter
 public enum Unidade {
-    MADRE("Clínica Social (Madre)"),
-    FLORESTA("Neuro (Floresta)");
+    MADRE("madre"),
+    FLORESTA("floresta");
 
-    final String descricao;
+    private final String valor;
 
-    Unidade(String descricao) {
-        this.descricao = descricao;
+    Unidade(String valor) {
+        this.valor = valor;
+    }
+
+    // Para usar em selects HTML
+    public static Unidade[] getOpcoes() {
+        return values();
+    }
+
+    @Override
+    public String toString() {
+        return this.valor;
     }
 }

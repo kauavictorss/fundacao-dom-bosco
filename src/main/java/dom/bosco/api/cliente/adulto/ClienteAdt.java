@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-@Table(name = "cliente_adt")
+@Table(name = "cliente_adulto")
 public class ClienteAdt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

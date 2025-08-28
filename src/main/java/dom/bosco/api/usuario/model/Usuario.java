@@ -20,7 +20,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-@Table(name = "usuarios")
+@Table(name = "usuario")
 public class Usuario implements UserDetails {
 
     @Id
@@ -58,7 +58,7 @@ public class Usuario implements UserDetails {
     private Cargo cargo;
 
     // Metadados
-    @Column(name = "criado_em")
+    @Column(name = "criado_em", updatable = false)
     private LocalDateTime criadoEm;
 
     @Column(name = "atualizado_em")

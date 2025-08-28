@@ -14,7 +14,7 @@ public class Endereco {
 
     private String cep;
     private String logradouro;
-    @Column(name = "numero_endereco")
+    @Column(name = "num_endereco")
     private String numero;
     private String complemento;
     private String bairro;

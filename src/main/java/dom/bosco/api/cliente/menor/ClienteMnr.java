@@ -6,6 +6,7 @@ import dom.bosco.api.endereco.Endereco;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,7 +18,8 @@ import java.time.LocalDate;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "cliente_mnr")
+@EqualsAndHashCode(of = "id")
+@Table(name = "cliente_menor")
 public class ClienteMnr {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -92,8 +94,8 @@ public class ClienteMnr {
     @Column(name = "criado_por_usuario_id")
     private Long criadoPorUsuarioId;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "unidade_atendimento")
+    @Enumerated(EnumType.STRING)
     private Unidade unidadeAtendimento;
 
     @Embedded
@@ -123,7 +125,7 @@ public class ClienteMnr {
         this.queixaNeuropsicologica = dados.queixaNeuropsicologica();
         this.expectativasTratamento = dados.expectativasTratamento();
         this.unidadeAtendimento = dados.unidadeAtendimento();
-        this.endereco = new Endereco();
+        this.endereco = new Endereco(dados.endereco());
     }
 
 }

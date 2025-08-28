@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/login")
-public class RestAutenticacaoUsuario {
+public class RestLoginUsuario {
 
     private final RepoUsuario repository;
 
