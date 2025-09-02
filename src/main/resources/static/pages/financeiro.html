@@ -22,7 +22,8 @@
                 <i class="fa-solid fa-search"></i>
                 <input type="text" id="global-search-input" list="global-search-datalist" placeholder="Buscar...">
                 <datalist id="global-search-datalist"></datalist>
-                <button id="btn-global-search" class="btn-primary" title="Ir para o Detalhe"><i class="fa-solid fa-arrow-right"></i></button>
+                <button id="btn-global-search" class="btn-primary" title="Ir para o Detalhe"><i
+                        class="fa-solid fa-arrow-right"></i></button>
             </div>
             <div class="user-info">
                 <span id="current-user-name"></span>
@@ -32,13 +33,17 @@
         </div>
         <div class="nav-wrapper">
             <nav>
-                <a href="/index.html" class="tab-button"><i class="fa-solid fa-user-plus"></i><span>Cadastrar Cliente</span></a>
+                <a href="/index.html" class="tab-button"><i
+                        class="fa-solid fa-user-plus"></i><span>Cadastrar Cliente</span></a>
                 <a href="/pages/agenda.html" class="tab-button"><i class="fa-solid fa-calendar-days"></i><span>Agenda do Dia</span></a>
-                <a href="/pages/todos-pacientes.html" class="tab-button"><i class="fa-solid fa-clock-rotate-left"></i><span>Todos os pacientes</span></a>
+                <a href="/pages/todos-pacientes.html" class="tab-button"><i
+                        class="fa-solid fa-clock-rotate-left"></i><span>Todos os pacientes</span></a>
                 <a href="/pages/meus-pacientes.html" class="tab-button"><i class="fa-solid fa-briefcase"></i><span>Meus Pacientes</span></a>
                 <a href="/pages/financeiro.html" class="tab-button active"><i class="fa-solid fa-dollar-sign"></i><span>Financeiro</span></a>
-                <a href="/pages/relatorio.html" class="tab-button"><i class="fa-solid fa-chart-pie"></i><span>Relatórios</span></a>
-                <a href="/pages/estoque.html" class="tab-button"><i class="fa-solid fa-boxes-stacked"></i><span>Estoque</span></a>
+                <a href="/pages/relatorio.html" class="tab-button"><i
+                        class="fa-solid fa-chart-pie"></i><span>Relatórios</span></a>
+                <a href="/pages/estoque.html" class="tab-button"><i
+                        class="fa-solid fa-boxes-stacked"></i><span>Estoque</span></a>
                 <a href="/pages/funcionarios.html" class="tab-button"><i class="fa-solid fa-users"></i><span>Funcionários</span></a>
                 <a href="/pages/documentos.html" class="tab-button"><i class="fa-solid fa-chalkboard-user"></i><span>Mural do Coordenador</span></a>
             </nav>
@@ -47,8 +52,84 @@
 
     <main>
         <div id="tab-financeiro" class="tab-content active">
-            <div class="financial-header"><h2>Painel Financeiro</h2><div class="financial-controls"><label for="financial-period-selector">Período:</label><select id="financial-period-selector" class="report-period-selector"><option value="current-month">Mês atual</option><option value="last-3-months">Últimos 3 meses</option><option value="last-6-months">Últimos 6 meses</option><option value="current-year">Ano atual</option><option value="all">Todos os períodos</option></select><button id="btn-update-financial" class="btn-primary"><i class="fa-solid fa-refresh"></i> Atualizar</button></div></div>
-            <div class="financial-dashboard"><div class="financial-summary-grid"><div class="summary-card revenue-card"><div class="card-icon"><i class="fa-solid fa-arrow-trend-up"></i></div><div class="card-content"><h3>Receita Total</h3><span class="amount" id="monthly-revenue">R$ 0,00</span><div class="card-meta"><span>Atendimentos: <span id="monthly-appointments">0</span></span></div></div></div><div class="summary-card stock-entries-card"><div class="card-icon"><i class="fa-solid fa-shopping-cart"></i></div><div class="card-content"><h3>Despesas com Compras</h3><span class="amount" id="stock-entries-value">R$ 0,00</span><div class="card-meta"><span>Materiais adquiridos</span></div></div></div><div class="summary-card stock-exits-card"><div class="card-icon"><i class="fa-solid fa-tools"></i></div><div class="card-content"><h3>Custo de Materiais Usados</h3><span class="amount" id="stock-exits-value">R$ 0,00</span><div class="card-meta"><span>Materiais utilizados em atendimentos</span></div></div></div><div class="summary-card balance-card"><div class="card-icon"><i class="fa-solid fa-scale-balanced"></i></div><div class="card-content"><h3>Resultado Líquido</h3><span class="amount" id="net-result">R$ 0,00</span><div class="card-meta"><span>Receitas - Despesas Totais</span></div></div></div><div class="summary-card clients-card"><div class="card-icon"><i class="fa-solid fa-users"></i></div><div class="card-content"><h3>Clientes Ativos</h3><span class="count" id="active-clients">0</span><div class="card-meta"><span>Total cadastrados</span></div></div></div><div class="summary-card appointments-card"><div class="card-icon"><i class="fa-solid fa-calendar-check"></i></div><div class="card-content"><h3>Agendamentos</h3><span class="count" id="total-schedules">0</span><div class="card-meta"><span>No período</span></div></div></div></div><div class="financial-notes-section"><h3>Notas Diárias</h3><div class="daily-notes-controls"><button id="btn-add-daily-note" class="btn-primary"><i class="fa-solid fa-plus"></i> Adicionar Nota do Dia</button><button id="btn-generate-monthly-report" class="btn-secondary"><i class="fa-solid fa-file-alt"></i> Gerar Relatório Mensal</button><button id="btn-download-all-notes" class="btn-secondary"><i class="fa-solid fa-download"></i> Baixar Notas</button></div><div id="daily-notes-list"></div></div><div class="financial-chart-section"><h3>Relatório Detalhado - <span id="financial-period-display"></span></h3><div class="financial-details"><div id="financial-list"></div></div></div></div>
+            <div class="financial-header"><h2>Painel Financeiro</h2>
+                <div class="financial-controls"><label for="financial-period-selector">Período:</label><select
+                        id="financial-period-selector" class="report-period-selector">
+                    <option value="current-month">Mês atual</option>
+                    <option value="last-3-months">Últimos 3 meses</option>
+                    <option value="last-6-months">Últimos 6 meses</option>
+                    <option value="current-year">Ano atual</option>
+                    <option value="all">Todos os períodos</option>
+                </select>
+                    <button id="btn-update-financial" class="btn-primary"><i class="fa-solid fa-refresh"></i> Atualizar
+                    </button>
+                </div>
+            </div>
+            <div class="financial-dashboard">
+                <div class="financial-summary-grid">
+                    <div class="summary-card revenue-card">
+                        <div class="card-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="card-content"><h3>Receita Total</h3><span class="amount" id="monthly-revenue">R$ 0,00</span>
+                            <div class="card-meta"><span>Atendimentos: <span id="monthly-appointments">0</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="summary-card stock-entries-card">
+                        <div class="card-icon"><i class="fa-solid fa-shopping-cart"></i></div>
+                        <div class="card-content"><h3>Despesas com Compras</h3><span class="amount"
+                                                                                     id="stock-entries-value">R$ 0,00</span>
+                            <div class="card-meta"><span>Materiais adquiridos</span></div>
+                        </div>
+                    </div>
+                    <div class="summary-card stock-exits-card">
+                        <div class="card-icon"><i class="fa-solid fa-tools"></i></div>
+                        <div class="card-content"><h3>Custo de Materiais Usados</h3><span class="amount"
+                                                                                          id="stock-exits-value">R$ 0,00</span>
+                            <div class="card-meta"><span>Materiais utilizados em atendimentos</span></div>
+                        </div>
+                    </div>
+                    <div class="summary-card balance-card">
+                        <div class="card-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                        <div class="card-content"><h3>Resultado Líquido</h3><span class="amount"
+                                                                                  id="net-result">R$ 0,00</span>
+                            <div class="card-meta"><span>Receitas - Despesas Totais</span></div>
+                        </div>
+                    </div>
+                    <div class="summary-card clients-card">
+                        <div class="card-icon"><i class="fa-solid fa-users"></i></div>
+                        <div class="card-content"><h3>Clientes Ativos</h3><span class="count"
+                                                                                id="active-clients">0</span>
+                            <div class="card-meta"><span>Total cadastrados</span></div>
+                        </div>
+                    </div>
+                    <div class="summary-card appointments-card">
+                        <div class="card-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                        <div class="card-content"><h3>Agendamentos</h3><span class="count" id="total-schedules">0</span>
+                            <div class="card-meta"><span>No período</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="financial-notes-section"><h3>Notas Diárias</h3>
+                    <div class="daily-notes-controls">
+                        <button id="btn-add-daily-note" class="btn-primary"><i class="fa-solid fa-plus"></i> Adicionar
+                            Nota do Dia
+                        </button>
+                        <button id="btn-generate-monthly-report" class="btn-secondary"><i
+                                class="fa-solid fa-file-alt"></i> Gerar Relatório Mensal
+                        </button>
+                        <button id="btn-download-all-notes" class="btn-secondary"><i class="fa-solid fa-download"></i>
+                            Baixar Notas
+                        </button>
+                    </div>
+                    <div id="daily-notes-list"></div>
+                </div>
+                <div class="financial-chart-section"><h3>Relatório Detalhado - Mês atual<span
+                        id="financial-period-display"></span></h3>
+                    <div class="financial-details">
+                        <div id="financial-list"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 </div>

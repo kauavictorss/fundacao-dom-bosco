@@ -1,85 +1,40 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FUNDAÇÃO DOM BOSCO - Agenda do Dia</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-</head>
-<body>
-<div id="app">
-    <header>
-        <div class="header-top">
-            <div class="header-logo">
-                <img src="/a/a8926566-29ac-4da6-8bc6-4be946ef6d26" alt="Fundação Dom Bosco">
-                <h1>FUNDAÇÃO DOM BOSCO</h1>
-            </div>
-            <div class="global-search-container">
-                <i class="fa-solid fa-search"></i>
-                <input type="text" id="global-search-input" list="global-search-datalist" placeholder="Buscar...">
-                <datalist id="global-search-datalist"></datalist>
-                <button id="btn-global-search" class="btn-primary" title="Ir para o Detalhe"><i class="fa-solid fa-arrow-right"></i></button>
-            </div>
-            <div class="user-info">
-                <span id="current-user-name"></span>
-                <span id="current-user-role"></span>
-                <button id="btn-logout" class="btn-logout"><i class="fa-solid fa-sign-out-alt"></i> Sair</button>
-            </div>
-        </div>
-        <div class="nav-wrapper">
-            <nav>
-                <a href="/index.html" class="tab-button"><i class="fa-solid fa-user-plus"></i><span>Cadastrar Cliente</span></a>
-                <a href="/pages/agenda.html" class="tab-button active"><i class="fa-solid fa-calendar-days"></i><span>Agenda do Dia</span></a>
-                <a href="/pages/todos-pacientes.html" class="tab-button"><i class="fa-solid fa-clock-rotate-left"></i><span>Todos os pacientes</span></a>
-                <a href="/pages/meus-pacientes.html" class="tab-button"><i class="fa-solid fa-briefcase"></i><span>Meus Pacientes</span></a>
-                <a href="/pages/financeiro.html" class="tab-button"><i class="fa-solid fa-dollar-sign"></i><span>Financeiro</span></a>
-                <a href="/pages/relatorio.html" class="tab-button"><i class="fa-solid fa-chart-pie"></i><span>Relatórios</span></a>
-                <a href="/pages/estoque.html" class="tab-button"><i class="fa-solid fa-boxes-stacked"></i><span>Estoque</span></a>
-                <a href="/pages/funcionarios.html" class="tab-button"><i class="fa-solid fa-users"></i><span>Funcionários</span></a>
-                <a href="/pages/documentos.html" class="tab-button"><i class="fa-solid fa-chalkboard-user"></i><span>Mural do Coordenador</span></a>
-            </nav>
-        </div>
-    </header>
-
-    <main>
-        <div id="tab-agenda" class="tab-content active">
+        <div id="tab-agenda" class="tab-content">
             <h2>Agenda do Dia - <span id="current-date"></span></h2>
             <div class="agenda-controls">
                 <div class="calendar-container">
-                    <input type="month" id="month-selector">
+                    <input type="month" id="month-selector" aria-label="Seletor de mês">
                     <div id="calendar-grid" class="calendar-grid"></div>
                 </div>
                 <div class="agenda-actions">
-                    <input type="date" id="date-selector">
+                    <input type="date" id="date-selector" aria-label="Seletor de data">
                     <div class="agenda-filters">
                         <div id="professional-role-filter-container" class="form-group" style="display: none;">
                             <label for="professional-role-filter-select">Filtrar por Cargo:</label>
-                            <select id="professional-role-filter-select"></select>
+                            <select id="professional-role-filter-select">
+                                <!-- Options will be populated by JS -->
+                            </select>
                         </div>
                         <div id="professional-filter-container" class="form-group" style="display: none;">
                             <label for="professional-filter-select">Ver agenda de:</label>
-                            <select id="professional-filter-select"></select>
+                            <select id="professional-filter-select">
+                                <!-- Options will be populated by JS -->
+                            </select>
                         </div>
                         <div id="unit-filter-container" class="form-group" style="display: none;">
                             <label for="unit-filter-select">Filtrar por Unidade:</label>
-                            <select id="unit-filter-select"><option value="all">Todas as Unidades</option><option value="madre">Clínica Social (Madre)</option><option value="floresta">Neuro (Floresta)</option></select>
+                            <select id="unit-filter-select">
+                                <option value="all">Todas as Unidades</option>
+                                <option value="madre">Clínica Social (Madre)</option>
+                                <option value="floresta">Neuro (Floresta)</option>
+                            </select>
                         </div>
                     </div>
-                    <button id="btn-novo-agendamento" class="btn-primary"><i class="fa-solid fa-plus"></i> Novo Agendamento</button>
+                    <button id="btn-novo-agendamento" class="btn-primary">
+                        <i class="fa-solid fa-plus"></i> Novo Agendamento
+                    </button>
                 </div>
             </div>
-            <div id="agenda-list"></div>
+            <div id="agenda-list">
+                <!-- Agendamentos serão renderizados aqui -->
+            </div>
         </div>
-    </main>
-</div>
-
-<!-- All Modals -->
-<div id="modal-detalhes-cliente" class="modal-overlay" style="display: none;"><div class="modal-content"><button class="modal-close-btn">&times;</button><h2 id="modal-nome-cliente"></h2><div class="modal-details-grid"><div><h3>Dados Pessoais</h3><p><strong>CPF:</strong> <span id="modal-cpf-cliente"></span></p><p><strong>Data de Nasc.:</strong> <span id="modal-data-nascimento"></span></p><p><strong>Email:</strong> <span id="modal-email-cliente"></span></p><p><strong>Telefone:</strong> <span id="modal-telefone-cliente"></span></p><p><strong>Responsável:</strong> <span id="modal-responsavel-cliente"></span></p><p><strong>Unidade:</strong> <span id="modal-unidade-cliente"></span></p></div><div><h3>Endereço</h3><p><strong id="modal-logradouro-cliente"></strong>, <span id="modal-numero-cliente"></span></p><p><span id="modal-bairro-cliente"></span></p><p><span id="modal-cidade-estado-cliente"></span></p><p><strong>CEP:</strong> <span id="modal-cep-cliente"></span></p></div><div class="client-assigned-intern-info"><h3>Profissional Vinculado</h3><p id="modal-assigned-professional-name">Nenhum</p><p class="small-text" id="modal-assigned-professional-contact"></p></div></div><div class="modal-obs"><h3>Observações</h3><p id="modal-observacoes-cliente"></p></div><div class="client-notes-section"><h3>Notas do Cliente</h3><div id="client-notes-list"></div><button id="btn-add-note" class="btn-primary">Adicionar Nota</button></div><div class="client-documents-section"><h3>Documentos Anexados</h3><div id="client-documents-list"></div><button id="btn-add-document" class="btn-primary">Anexar Documento</button></div><hr><div class="client-history-section"><div class="history-header"><h3>Histórico de Atendimentos</h3><button id="btn-novo-atendimento" class="btn-primary btn-add-history"><i class="fa-solid fa-plus"></i> Adicionar ao Histórico</button></div><div id="historico-atendimentos"></div></div><div class="change-history-section" style="margin-top: 24px;"><h3>Histórico de Alterações do Paciente</h3><div id="client-change-history-list"></div></div><button id="btn-schedule-new-appointment" class="btn-primary" style="margin-left: 10px;">Agendar Novo Atendimento</button><button id="btn-assign-professional-to-client" class="btn-secondary" style="margin-left: 10px;">Vincular Profissionais</button><button id="btn-edit-client" class="btn-secondary" style="margin-left: 10px;">Editar Dados</button><button id="btn-duplicate-client" class="btn-secondary" style="margin-left: 10px;">Duplicar Cliente</button><button id="btn-generate-client-report" class="btn-secondary" style="margin-left: 10px;"><i class="fa-solid fa-file-invoice"></i> Gerar Relatório</button><button id="btn-delete-client" class="btn-danger" style="margin-left: 10px;"><i class="fa-solid fa-trash-can"></i> Excluir Cliente</button></div></div>
-
-<script src="../js/script.js"></script>
-</body>
-</html>
