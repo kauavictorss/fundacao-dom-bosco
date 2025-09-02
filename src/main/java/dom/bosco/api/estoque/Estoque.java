@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "estoque")
+@Table(name = "estoque_itens")
 public class Estoque {
 
     @Id
@@ -40,7 +40,8 @@ public class Estoque {
 
     private String descricao;
 
-    private String notasCompra;
+    @Column(name = "nota")
+    private String nota;
 
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;

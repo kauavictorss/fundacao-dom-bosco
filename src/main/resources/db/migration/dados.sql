@@ -20,6 +20,7 @@ CREATE TABLE cargo (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE cargo ADD COLUMN ativo BOOLEAN DEFAULT true;
 
 CREATE TABLE permissao_cargo_usuario (
     id BIGSERIAL NOT NULL PRIMARY KEY,
@@ -108,7 +109,7 @@ CREATE TABLE cliente_menor (
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (criado_por_usuario_id) REFERENCES usuario(id)
 );
-
+ALTER TABLE cliente_menor RENAME COLUMN numero_endereco TO num_endereco;
 -- Tabela de vínculo entre profissionais e clientes adultos
 CREATE TABLE vinculo_profissional_cliente_adulto (
     id BIGSERIAL NOT NULL PRIMARY KEY,
@@ -211,7 +212,7 @@ CREATE TABLE documentos_clientes (
     titulo VARCHAR(500) NOT NULL,
     tipo_documento VARCHAR(100) NOT NULL,
     nome_arquivo VARCHAR(500) NOT NULL,
-    dados_arquivo TEXT NOT NULL, -- Base64 do arquivo
+    -- dados_arquivo TEXT NOT NULL,  Base64 do arquivo
     descricao TEXT,
     criado_por_usuario_id BIGINT,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -226,9 +227,9 @@ CREATE TABLE estoque_itens (
     id BIGSERIAL NOT NULL PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,
     categoria VARCHAR(100) NOT NULL,
-    quantidade INT NOT NULL DEFAULT 0,
-    estoque_minimo INT NOT NULL DEFAULT 5,
-    valor_unidade DECIMAL(10,2) DEFAULT 0.00,
+    quantidade INT NOT NULL,
+    estoque_minimo INT NOT NULL,
+    valor_unidade DECIMAL(10,2) NOT NULL,
     descricao TEXT,
     nota VARCHAR(500),
     ativo BOOLEAN DEFAULT true,

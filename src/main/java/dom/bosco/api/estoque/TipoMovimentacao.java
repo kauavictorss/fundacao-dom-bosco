@@ -1,5 +1,8 @@
 package dom.bosco.api.estoque;
 
+import lombok.Getter;
+
+@Getter
 public enum TipoMovimentacao {
     ENTRADA("entrada", "Entrada"),
     SAIDA("saida", "Saída");
@@ -11,9 +14,6 @@ public enum TipoMovimentacao {
         this.code = code;
         this.displayName = displayName;
     }
-
-    public String getCode() { return code; }
-    public String getDisplayName() { return displayName; }
 
     public static TipoMovimentacao fromCode(String code) {
         for (TipoMovimentacao tipo : values()) {

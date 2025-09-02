@@ -63,16 +63,16 @@ public class ClienteAdt {
     @Column(name = "obsv_gerais", columnDefinition = "TEXT")
     private String observacoesGerais;
 
-    @Column(name = "diagnostico_principal", columnDefinition = "TEXT")
+    @Column(name = "diagnostic_principal", columnDefinition = "TEXT")
     private String diagnosticoPrincipal;
 
-    @Column(name = "historico_medico", columnDefinition = "TEXT")
+    @Column(name = "historic_medico", columnDefinition = "TEXT")
     private String historicoMedico;
 
-    @Column(name = "queixa_neuropsicologica", columnDefinition = "TEXT")
+    @Column(name = "qx_neuropsicologica", columnDefinition = "TEXT")
     private String queixaNeuropsicologica;
 
-    @Column(name = "expectativa_tratamento", columnDefinition = "TEXT")
+    @Column(name = "expctv_tratamento", columnDefinition = "TEXT")
     private String expectativasTratamento;
 
     @Column(name = "criado_por_usuario_id")

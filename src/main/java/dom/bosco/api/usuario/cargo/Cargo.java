@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.EnumSet;
-import java.util.Set;
 
 @Entity
 @Getter
