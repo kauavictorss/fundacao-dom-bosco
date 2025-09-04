@@ -72,6 +72,11 @@ CREATE TABLE cliente_adulto (
     FOREIGN KEY (criado_por_usuario_id) REFERENCES usuario (id)
 );
 
+ALTER TABLE cliente_adulto
+    DROP CONSTRAINT IF EXISTS cliente_adulto_unidade_atendimento_check,
+    ADD CONSTRAINT cliente_adulto_unidade_atendimento_check
+        CHECK (LOWER(unidade_atendimento) IN ('madre','floresta'));
+
 CREATE TABLE cliente_menor (
     id BIGSERIAL NOT NULL PRIMARY KEY,
     ativo BOOLEAN DEFAULT true,
@@ -110,6 +115,8 @@ CREATE TABLE cliente_menor (
     FOREIGN KEY (criado_por_usuario_id) REFERENCES usuario(id)
 );
 ALTER TABLE cliente_menor RENAME COLUMN numero_endereco TO num_endereco;
+ALTER TABLE cliente_menor ALTER COLUMN unidade_atendimento TYPE VARCHAR(50);
+
 -- Tabela de vínculo entre profissionais e clientes adultos
 CREATE TABLE vinculo_profissional_cliente_adulto (
     id BIGSERIAL NOT NULL PRIMARY KEY,

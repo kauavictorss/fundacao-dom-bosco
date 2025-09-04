@@ -1,5 +1,6 @@
 package dom.bosco.api.cliente.adulto;
 
+import dom.bosco.api.cliente.adulto.dto.DadosListagemClienteAdt;
 import dom.bosco.api.cliente.adulto.dto.DtoCadastroClienteAdt;
 import dom.bosco.api.cliente.adulto.dto.DtoDetalharClienteAdt;
 import dom.bosco.api.usuario.model.Usuario;
@@ -9,6 +10,9 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -27,31 +31,35 @@ public class RestClienteAdulto {
     public ResponseEntity<DtoDetalharClienteAdt> cadastrar(@RequestBody @Valid DtoCadastroClienteAdt dados, UriComponentsBuilder uriBuilder, HttpServletRequest request) {
         log.info("Cadastrando Cliente Adulto: {}", dados.nome());
 
-        try {
-            // Capturar usuario logado da sessão
-            HttpSession session = request.getSession();
-            Usuario usuarioLogado = (Usuario) session.getAttribute("usuarioLogado");
+        HttpSession session = request.getSession();
+        Usuario usuarioLogado = (Usuario) session.getAttribute("usuarioLogado");
 
-            if (usuarioLogado == null) {
-                log.warn("Tentativa de cadastro sem usuário logado");
-                return ResponseEntity.status(401).body(null);
-            }
-
-            // Criar cliente e vincular ao usuário logado
-            var clienteAdt = new ClienteAdt(dados);
-            clienteAdt.setCriadoPorUsuarioId(usuarioLogado.getId());
-
-            repositorio.save(clienteAdt);
-
-            var uri = uriBuilder.path("/cliente-adulto/{id}").buildAndExpand(clienteAdt.getId()).toUri();
-
-            log.info("Cliente adulto cadastrado com sucesso! ID: {} - Nome: {} - Criado por: {}", clienteAdt.getId(), clienteAdt.getNome(), usuarioLogado.getNome());
-            return ResponseEntity.created(uri).body(new DtoDetalharClienteAdt(clienteAdt));
-
-        } catch (Exception e) {
-            log.error("Erro ao cadastrar cliente adulto: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest().build();
+        if (usuarioLogado == null) {
+            log.warn("Tentativa de cadastro sem usuário logado");
+            return ResponseEntity.status(401).body(null);
         }
+
+        var clienteAdt = new ClienteAdt(dados);
+        clienteAdt.setCriadoPorUsuarioId(usuarioLogado.getId());
+
+        repositorio.save(clienteAdt);
+
+        var uri = uriBuilder.path("/cliente-adulto/{id}").buildAndExpand(clienteAdt.getId()).toUri();
+
+        log.info("Cliente adulto cadastrado com sucesso! ID: {} - Nome: {} - Criado por: {}", clienteAdt.getId(), clienteAdt.getNome(), usuarioLogado.getNome());
+        return ResponseEntity.created(uri).body(new DtoDetalharClienteAdt(clienteAdt));
+    }
+
+    @GetMapping("/listar/todos")
+    public ResponseEntity<Page<DadosListagemClienteAdt>> listarTodos(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao) {
+        var page = repositorio.findAll(paginacao).map(DadosListagemClienteAdt::new);
+        return ResponseEntity.ok(page);
+    }
+
+    @GetMapping("/listar/ativos")
+    public ResponseEntity<Page<DadosListagemClienteAdt>> listarAtivos(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao) {
+        var page = repositorio.findAllByAtivoTrue(paginacao).map(DadosListagemClienteAdt::new);
+        return ResponseEntity.ok(page);
     }
 
     @GetMapping("/{id}")
