@@ -1,6 +1,8 @@
 package dom.bosco.api.usuario.cargo;
 
+import dom.bosco.api.usuario.cargo.dto.DtoCadastrarCargo;
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -45,5 +47,10 @@ public class Cargo {
     @PreUpdate
     protected void onUpdate() {
         atualizadoEm = LocalDateTime.now();
+    }
+
+    public Cargo(@Valid DtoCadastrarCargo dados) {
+        this.ativo = true;
+        this.nome = dados.nome();
     }
 }

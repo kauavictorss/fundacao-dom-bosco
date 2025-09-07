@@ -2005,35 +2005,43 @@
     </div>
 </div>
 
-<!-- NEW Modal for Role Management -->
+<!-- Modal para Gerenciar Cargos -->
 <div id="modal-manage-roles" class="modal-overlay" style="display: none;">
     <div class="modal-content modal-large">
         <button class="modal-close-btn">&times;</button>
         <h2>Gerenciar Cargos Personalizados</h2>
         <p class="modal-description">Crie e edite cargos para atribuir permissões de acesso específicas para cada função
             na clínica.</p>
+
+        <div class="intern-controls" style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+            <button id="btn-create-new-cargo" class="btn-primary">
+                <i class="fa-solid fa-plus"></i> Criar Novo Cargo
+            </button>
+        </div>
+
         <div class="roles-manager-layout">
-            <div id="roles-list-container" class="roles-list-container">
-                <!-- Custom roles will be listed here -->
+            <div id="cargos-list-container" class="roles-list-container">
+                <!-- Custom cargos will be listed here -->
+                <p>Carregando cargos...</p>
             </div>
-            <div id="role-editor-container" class="role-editor-container" style="display: none;">
-                <h3 id="role-editor-title">Criar Novo Cargo</h3>
-                <form id="form-role-editor">
-                    <input type="hidden" id="role-editor-id">
+            <div id="cargo-editor-container" class="role-editor-container" style="display: none;">
+                <h3 id="cargo-editor-title">Criar Novo Cargo</h3>
+                <form id="form-cargo-editor">
+                    <input type="hidden" id="cargo-editor-id">
                     <div class="form-group">
-                        <label for="role-name">Nome do Cargo</label>
-                        <input type="text" id="role-name" required placeholder="Ex: Psicólogo Chefe">
+                        <label for="cargo-name">Nome do Cargo</label>
+                        <input type="text" id="cargo-name" required placeholder="Ex: Psicólogo Chefe">
                     </div>
                     <div class="form-group">
                         <label>Permissões de Acesso às Abas</label>
-                        <div id="role-tab-permissions" class="checkbox-group-container">
+                        <div id="cargo-tab-permissions" class="checkbox-group-container">
                             <!-- Tab permission selectors will be populated here -->
                         </div>
                     </div>
                     <div class="modal-actions"
                          style="justify-content: flex-end; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
-                        <button type="submit" class="btn-primary" id="btn-save-role">Salvar Cargo</button>
-                        <button type="button" class="btn-secondary" id="btn-cancel-role-edit">Cancelar</button>
+                        <button type="submit" class="btn-primary" id="btn-save-cargo">Salvar Cargo</button>
+                        <button type="button" class="btn-secondary" id="btn-cancel-cargo-edit">Cancelar</button>
                     </div>
                 </form>
             </div>

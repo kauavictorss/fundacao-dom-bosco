@@ -13,7 +13,7 @@ public record DtoCadastroClienteAdt(
         Long id,
         Boolean ativo,
         @NotBlank String nome,
-        @NotNull @JsonFormat(pattern = "dd-MM-yyyy") @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate dataNascimento,
+        @NotNull /*@JsonFormat(pattern = "dd-MM-yyyy") @DateTimeFormat(pattern = "dd-MM-yyyy") */LocalDate dataNascimento,
         @NotBlank String generalidade,
         @NotBlank String cpf,
         String rg,

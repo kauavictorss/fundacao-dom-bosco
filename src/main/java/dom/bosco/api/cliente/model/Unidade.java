@@ -1,5 +1,6 @@
 package dom.bosco.api.cliente.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 
 @Getter
@@ -13,9 +14,14 @@ public enum Unidade {
         this.valor = valor;
     }
 
-    // Para usar em selects HTML
-    public static Unidade[] getOpcoes() {
-        return values();
+    @JsonCreator
+    public static Unidade fromString(String text) {
+        for (Unidade b : Unidade.values()) {
+            if (b.valor.equalsIgnoreCase(text)) {
+                return b;
+            }
+        }
+        throw new IllegalArgumentException("Unidade inválida: " + text);
     }
 
     @Override

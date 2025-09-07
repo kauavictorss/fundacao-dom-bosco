@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>Telefone:</strong> ${client.telefone || 'Não informado'}</p>
             </div>
             <div class="card-actions">
-                <button class="btn-secondary btn-sm" data-client-id="${client.id}">Ver Detalhes</button>
+                <button class="btn-secondary btn-sm btn-detalhes-cliente" data-client-id="${client.id}">Ver Detalhes</button>
             </div>
         `;
         return clientCard;
@@ -75,9 +75,221 @@ document.addEventListener('DOMContentLoaded', () => {
         return employeeCard;
     }
 
-    // --- 3. FUNÇÕES DE INTERAÇÃO DA UI ---
+    function popularModalCliente(cliente) {
+        if (!cliente) return;
 
-    const setupTabNavigation = () => {
+        document.getElementById('modal-nome-cliente').textContent = cliente.nome;
+        document.getElementById('modal-cpf-cliente').textContent = cliente.cpf || 'Não informado';
+        document.getElementById('modal-data-nascimento').textContent = cliente.dataNascimento ? new Date(cliente.dataNascimento + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informado';
+        document.getElementById('modal-email-cliente').textContent = cliente.email || 'Não informado';
+        document.getElementById('modal-telefone-cliente').textContent = cliente.telefone || 'Não informado';
+        document.getElementById('modal-responsavel-cliente').textContent = 'N/A (Adulto)';
+        document.getElementById('modal-unidade-cliente').textContent = cliente.unidadeAtendimento || 'Não informado';
+
+        if (cliente.endereco) {
+            document.getElementById('modal-logradouro-cliente').textContent = cliente.endereco.logradouro || '';
+            document.getElementById('modal-numero-cliente').textContent = cliente.endereco.numero || '';
+            document.getElementById('modal-bairro-cliente').textContent = cliente.endereco.bairro || '';
+            document.getElementById('modal-cidade-estado-cliente').textContent = `${cliente.endereco.cidade || ''}/${cliente.endereco.uf || ''}`;
+            document.getElementById('modal-cep-cliente').textContent = cliente.endereco.cep || '';
+        }
+
+        document.getElementById('modal-observacoes-cliente').textContent = cliente.observacoesGerais || 'Nenhuma observação.';
+
+        const modal = document.getElementById('modal-detalhes-cliente');
+        modal.style.display = 'flex';
+    }
+
+    // --- 3. FUNÇÕES DE GERENCIAMENTO DE CARGOS ---
+
+    async function getCargos() {
+        return await fetchData('/cargo');
+    }
+
+    function populateCargosDropdowns(cargos, containerIds) {
+        if (!cargos || !Array.isArray(cargos)) {
+            console.warn('Dados de cargos inválidos ou ausentes para popular dropdowns.', cargos);
+            return;
+        }
+
+        containerIds.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) {
+                select.innerHTML = '<option value="">Selecione um cargo</option>'; // Default option
+                cargos.forEach(cargo => {
+                    const option = document.createElement('option');
+                    option.value = cargo.id;
+                    option.textContent = cargo.nome;
+                    select.appendChild(option);
+                });
+            } else {
+                console.warn(`Dropdown com ID '${id}' não encontrado.`);
+            }
+        });
+    }
+
+    function renderCargosList(cargos) {
+        const container = document.getElementById('cargos-list-container');
+        if (!container) return;
+
+        if (!cargos || cargos.length === 0) {
+            container.innerHTML = '<p>Nenhum cargo personalizado criado ainda.</p>';
+            return;
+        }
+
+        container.innerHTML = cargos.map(cargo => `
+            <div class="cargo-item" data-cargo-id="${cargo.id}">
+                <span>${cargo.nome}</span>
+                <div class="cargo-actions">
+                    <button class="btn-icon btn-edit-cargo" title="Editar Cargo"><i class="fa-solid fa-pencil-alt"></i></button>
+                    <button class="btn-icon btn-delete-cargo" title="Excluir Cargo"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function loadAndPopulateCargos() {
+        const cargosData = await getCargos(); // cargosData é o objeto de paginação
+        if (cargosData && cargosData.content) {
+            const cargos = cargosData.content; // Extrai a lista de cargos
+            populateCargosDropdowns(cargos, ['new-funcionario-role', 'funcionario-role-filter']);
+            renderCargosList(cargos);
+        }
+    }
+
+    function setupCargoManagementListeners() {
+        const cargoEditor = document.getElementById('cargo-editor-container');
+        const cargoEditorTitle = document.getElementById('cargo-editor-title');
+        const cargoForm = document.getElementById('form-cargo-editor');
+        const cargoNameInput = document.getElementById('cargo-name');
+        const cargoIdInput = document.getElementById('cargo-editor-id');
+
+        document.getElementById('btn-create-new-cargo')?.addEventListener('click', () => {
+            cargoForm.reset();
+            cargoIdInput.value = '';
+            cargoEditorTitle.textContent = 'Criar Novo Cargo';
+            cargoEditor.style.display = 'block';
+        });
+
+        document.getElementById('btn-cancel-cargo-edit')?.addEventListener('click', () => {
+            cargoEditor.style.display = 'none';
+            cargoForm.reset();
+        });
+
+        cargoForm?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const cargoName = cargoNameInput.value.trim();
+            if (!cargoName) {
+                alert('O nome do cargo não pode estar vazio.');
+                return;
+            }
+
+            const cargoData = { nome: cargoName };
+
+            try {
+                const response = await fetch('/cargo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(cargoData)
+                });
+
+                if (response.ok || response.status === 201) {
+                    alert('Cargo salvo com sucesso!');
+                    cargoForm.reset();
+                    cargoEditor.style.display = 'none';
+                    await loadAndPopulateCargos(); // Refresh lists
+                } else {
+                    const error = await response.json();
+                    alert(`Erro ao salvar cargo: ${error.message || 'Erro desconhecido.'}`);
+                }
+            } catch (error) {
+                console.error('Falha ao salvar o cargo:', error);
+                alert('Não foi possível conectar ao servidor para salvar o cargo.');
+            }
+        });
+    }
+
+
+    // --- 4. FUNÇÕES DE CADASTRO E AÇÕES (API POST, PUT, DELETE) ---
+
+    async function handleCadastroCliente(event) {
+        event.preventDefault();
+        const form = event.target;
+        const dados = {
+            nome: form.querySelector('#nome-cliente-adulto').value,
+            dataNascimento: form.querySelector('#data-nascimento-adulto').value,
+            generalidade: form.querySelector('#genero-adulto').value,
+            cpf: form.querySelector('#cpf-cliente-adulto').value,
+            rg: form.querySelector('#rg-adulto').value,
+            naturalidade: form.querySelector('#naturalidade-adulto').value,
+            estadoCivil: form.querySelector('#estado-civil-adulto').value,
+            escolaridade: form.querySelector('#escolaridade-adulto').value,
+            profissao: form.querySelector('#profissao-adulto').value,
+            email: form.querySelector('#email-cliente-adulto').value,
+            telefone: form.querySelector('#telefone-cliente-adulto').value,
+            contatoEmergencia: form.querySelector('#contato-emergencia-adulto').value,
+            unidadeAtendimento: form.querySelector('#unidade-atendimento-adulto').value,
+            observacoesGerais: form.querySelector('#observacoes-cliente-adulto').value,
+            diagnosticoPrincipal: form.querySelector('#diagnostico-principal-adulto').value,
+            historicoMedico: form.querySelector('#historico-medico-adulto').value,
+            queixaNeuropsicologica: form.querySelector('#queixa-neuropsicologica-adulto').value,
+            expectativasTratamento: form.querySelector('#expectativas-tratamento-adulto').value,
+            endereco: {
+                cep: form.querySelector('#cep-cliente-adulto').value,
+                logradouro: form.querySelector('#logradouro-cliente-adulto').value,
+                numero: form.querySelector('#numero-cliente-adulto').value,
+                complemento: form.querySelector('#complemento-cliente-adulto').value,
+                bairro: form.querySelector('#bairro-cliente-adulto').value,
+                cidade: form.querySelector('#cidade-cliente-adulto').value,
+                uf: form.querySelector('#estado-cidade-adulto').value
+            }
+        };
+
+        try {
+            const response = await fetch('/cliente-adulto', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dados)
+            });
+
+            if (response.status === 201) {
+                alert('Cliente cadastrado com sucesso!');
+                form.reset();
+                const [todosClientesData, meusPacientesData] = await Promise.all([
+                    fetchData('/cliente-adulto/listar/todos'),
+                    fetchData('/cliente-adulto/listar/ativos')
+                ]);
+                renderizarLista( 'client-list-container', todosClientesData, criarCardCliente, 'Nenhum cliente (ativo ou inativo) encontrado.');
+                renderizarLista('meus-pacientes-list', meusPacientesData, criarCardCliente, 'Nenhum paciente ativo encontrado.');
+            } else {
+                const errorData = await response.json();
+                alert(`Erro ao cadastrar cliente: ${errorData.message || 'Verifique os dados e tente novamente.'}`);
+            }
+        } catch (error) {
+            console.error('Falha ao enviar dados do cliente:', error);
+            alert('Não foi possível conectar ao servidor. Tente novamente mais tarde.');
+        }
+    }
+
+    async function handleVerDetalhesCliente(event) {
+        if (event.target.classList.contains('btn-detalhes-cliente')) {
+            const clienteId = event.target.dataset.clientId;
+            const clienteData = await fetchData(`/cliente-adulto/${clienteId}`);
+            if (clienteData) {
+                popularModalCliente(clienteData);
+            }
+        }
+    }
+
+
+    // --- 5. FUNÇÕES DE INTERAÇÃO DA UI ---
+
+    const setupEventListeners = () => {
+        // Navegação por Abas
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
         tabButtons.forEach(button => {
@@ -92,9 +304,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-    };
 
-    const setupAgeSelection = () => {
+        // Seleção de Formulário (Adulto/Menor)
         const ageSelectionRadios = document.querySelectorAll('input[name="age-type"]');
         const adultForm = document.getElementById('form-novo-cliente-adulto');
         const minorForm = document.getElementById('form-novo-cliente-menor');
@@ -111,9 +322,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         ageSelectionRadios.forEach(radio => radio.addEventListener('change', setFormVisibility));
         setFormVisibility();
-    };
 
-    const setupModalToggles = () => {
+        // Modais
         const modalTriggers = {
             'btn-novo-agendamento': 'modal-novo-agendamento',
             'btn-add-stock-item': 'modal-add-stock',
@@ -142,28 +352,43 @@ document.addEventListener('DOMContentLoaded', () => {
                  event.target.style.display = 'none';
             }
         });
-    };
 
-    const setupLogout = () => {
+        // Logout
         const logoutButton = document.getElementById('btn-logout');
         if (logoutButton) {
             logoutButton.addEventListener('click', () => {
                 window.location.href = 'login.html';
             });
         }
+
+        // Cadastro de Cliente Adulto
+        const formCadastro = document.getElementById('form-novo-cliente-adulto');
+        if (formCadastro) {
+            formCadastro.addEventListener('submit', handleCadastroCliente);
+        }
+
+        // Delegação de Evento para "Ver Detalhes"
+        const clientListContainer = document.getElementById('client-list-container');
+        if(clientListContainer) {
+            clientListContainer.addEventListener('click', handleVerDetalhesCliente);
+        }
+        const meusPacientesList = document.getElementById('meus-pacientes-list');
+        if(meusPacientesList) {
+            meusPacientesList.addEventListener('click', handleVerDetalhesCliente);
+        }
+
+        // Gerenciamento de Cargos
+        setupCargoManagementListeners();
     };
 
-    // --- 4. INICIALIZAÇÃO DA APLICAÇÃO ---
+    // --- 6. INICIALIZAÇÃO DA APLICAÇÃO ---
     async function initializeApp() {
         const appContainer = document.getElementById('app');
         if (appContainer) {
             appContainer.style.display = 'block';
         }
-        
-        setupTabNavigation();
-        setupAgeSelection();
-        setupModalToggles();
-        setupLogout();
+
+        setupEventListeners();
 
         // Busca e exibe os dados REAIS da API
         const [todosClientesData, meusPacientesData, funcionariosData] = await Promise.all([
@@ -175,7 +400,10 @@ document.addEventListener('DOMContentLoaded', () => {
         renderizarLista( 'client-list-container', todosClientesData, criarCardCliente, 'Nenhum cliente (ativo ou inativo) encontrado.');
         renderizarLista('meus-pacientes-list', meusPacientesData, criarCardCliente, 'Nenhum paciente ativo encontrado.');
         renderizarLista('funcionario-list-container', funcionariosData, criarCardFuncionario, 'Nenhum funcionário encontrado.');
+
+        // Carrega e popula os cargos
+        await loadAndPopulateCargos();
     }
 
-    initializeApp();
+    initializeApp().then(r => console.log('App inicializado.'));
 });
