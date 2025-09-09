@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  <span class="employee-id">ID: ${user.id}</span>
             </div>
             <div class="card-body">
-                <p><strong>Cargo:</strong> ${user.cargo || 'Não informado'}</p>
+                <p><strong>Cargo:</strong> ${user.cargo.nome || 'Não informado'}</p>
                 <p><strong>Email:</strong> ${user.email || 'Não informado'}</p>
             </div>
             <div class="card-actions">
@@ -101,6 +101,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 3. FUNÇÕES DE GERENCIAMENTO DE CARGOS ---
+
+    const allSystemTabs = [
+        { id: 'cadastro', label: 'Cadastrar Cliente' },
+        { id: 'agenda', label: 'Agenda do Dia' },
+        { id: 'historico', label: 'Todos os pacientes' },
+        { id: 'meus-pacientes', label: 'Meus Pacientes' },
+        { id: 'financeiro', label: 'Financeiro' },
+        { id: 'relatorios', label: 'Relatórios' },
+        { id: 'estoque', label: 'Estoque' },
+        { id: 'funcionarios', label: 'Funcionários' },
+        { id: 'documentos', label: 'Mural do Coordenador' }
+    ];
+
+    function populateCargoPermissions(containerId, currentPermissions = {}) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+
+        allSystemTabs.forEach(tab => {
+            const selectId = `${containerId}-${tab.id}-select`;
+            const currentAccess = currentPermissions[tab.id] || 'default';
+
+            const accessGroup = document.createElement('div');
+            accessGroup.className = 'permission-access-group';
+
+            accessGroup.innerHTML = `
+                <label for="${selectId}">${tab.label}</label>
+                <select id="${selectId}" data-tab-id="${tab.id}">
+                    <option value="default">Padrão do Cargo</option>
+                    <option value="none">Sem Acesso</option>
+                    <option value="view">Ver</option>
+                    <option value="edit">Editar</option>
+                </select>
+            `;
+            container.appendChild(accessGroup);
+
+            const selectElement = document.getElementById(selectId);
+            selectElement.value = currentAccess;
+        });
+    }
 
     async function getCargos() {
         return await fetchData('/cargo');
@@ -152,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cargosData = await getCargos(); // cargosData é o objeto de paginação
         if (cargosData && cargosData.content) {
             const cargos = cargosData.content; // Extrai a lista de cargos
-            populateCargosDropdowns(cargos, ['new-funcionario-role', 'funcionario-role-filter']);
+            populateCargosDropdowns(cargos, ['new-funcionario-cargo', 'funcionario-cargo-filter']);
             renderCargosList(cargos);
         }
     }
@@ -168,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cargoForm.reset();
             cargoIdInput.value = '';
             cargoEditorTitle.textContent = 'Criar Novo Cargo';
+            populateCargoPermissions('cargo-tab-permissions', {});
             cargoEditor.style.display = 'block';
         });
 
@@ -184,7 +225,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const cargoData = { nome: cargoName };
+            const permissoes = {};
+            const permissionSelectors = document.querySelectorAll('#cargo-tab-permissions .permission-access-group select');
+            permissionSelectors.forEach(select => {
+                const tabId = select.dataset.tabId;
+                if (select.value !== 'default') {
+                    permissoes[tabId] = select.value;
+                }
+            });
+
+            const cargoData = { 
+                nome: cargoName,
+                permissoes: permissoes
+            };
 
             try {
                 const response = await fetch('/cargo', {
@@ -213,6 +266,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- 4. FUNÇÕES DE CADASTRO E AÇÕES (API POST, PUT, DELETE) ---
+
+    async function handleCadastroFuncionario(event) {
+        event.preventDefault();
+        const form = event.target;
+
+        const cargoId = form.querySelector('#new-funcionario-cargo').value;
+        if (!cargoId) {
+            alert('Por favor, selecione um cargo.');
+            return;
+        }
+
+        const dados = {
+            usuario: form.querySelector('#new-funcionario-username').value,
+            senha: form.querySelector('#new-funcionario-password').value,
+            nome: form.querySelector('#new-funcionario-name').value,
+            cpf: form.querySelector('#new-funcionario-cpf').value.replace(/\D/g, ''), // Remove non-digit characters
+            email: form.querySelector('#new-funcionario-email').value,
+            celular: form.querySelector('#new-funcionario-phone').value,
+            endereco: form.querySelector('#new-funcionario-address').value,
+            cargoId: cargoId // Enviar apenas o ID do cargo
+        };
+
+        try {
+            const response = await fetch('/usuario', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dados)
+            });
+
+            if (response.ok || response.status === 201) {
+                alert('Funcionário cadastrado com sucesso!');
+                form.reset();
+                document.getElementById('modal-add-funcionario').style.display = 'none';
+                const funcionariosData = await fetchData('/usuario/listar/ativos');
+                renderizarLista('funcionario-list-container', funcionariosData, criarCardFuncionario, 'Nenhum funcionário encontrado.');
+            } else {
+                const errorData = await response.json();
+                const errorMessage = errorData.message || (errorData.errors ? errorData.errors.map(e => e.defaultMessage).join(', ') : 'Verifique os dados e tente novamente.');
+                alert(`Erro ao cadastrar funcionário: ${errorMessage}`);
+            }
+        } catch (error) {
+            console.error('Falha ao enviar dados do funcionário:', error);
+            alert('Não foi possível conectar ao servidor. Tente novamente mais tarde.');
+        }
+    }
 
     async function handleCadastroCliente(event) {
         event.preventDefault();
@@ -336,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'btn-add-general-document': 'modal-add-general-document',
             'btn-add-general-note': 'modal-add-general-note',
             'btn-add-meeting-alert': 'modal-add-meeting-alert',
-            'btn-manage-roles': 'modal-manage-roles',
+            'btn-manage-cargos': 'modal-manage-cargos',
         };
         document.body.addEventListener('click', (event) => {
             const button = event.target.closest('[id]');
@@ -362,9 +462,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Cadastro de Cliente Adulto
-        const formCadastro = document.getElementById('form-novo-cliente-adulto');
-        if (formCadastro) {
-            formCadastro.addEventListener('submit', handleCadastroCliente);
+        const formCadastroCliente = document.getElementById('form-novo-cliente-adulto');
+        if (formCadastroCliente) {
+            formCadastroCliente.addEventListener('submit', handleCadastroCliente);
+        }
+
+        // Cadastro de Funcionário
+        const formCadastroFuncionario = document.getElementById('form-add-funcionario');
+        if (formCadastroFuncionario) {
+            formCadastroFuncionario.addEventListener('submit', handleCadastroFuncionario);
         }
 
         // Delegação de Evento para "Ver Detalhes"

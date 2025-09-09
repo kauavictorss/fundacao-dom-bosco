@@ -410,3 +410,13 @@ CREATE TRIGGER trigger_estoque_timestamp
     BEFORE UPDATE ON estoque_itens
     FOR EACH ROW
 EXECUTE FUNCTION atualizar_timestamp();
+
+-- Remove a coluna de texto antiga e cria a coluna de chave estrangeira
+ALTER TABLE usuario DROP COLUMN IF EXISTS cargo;
+ALTER TABLE usuario ADD COLUMN IF NOT EXISTS cargo_id BIGINT;
+
+-- Adiciona a restrição de chave estrangeira
+-- (É seguro executar mesmo que já exista, se o nome for único)
+ALTER TABLE usuario
+ADD CONSTRAINT fk_usuario_cargo
+FOREIGN KEY (cargo_id) REFERENCES cargo(id);

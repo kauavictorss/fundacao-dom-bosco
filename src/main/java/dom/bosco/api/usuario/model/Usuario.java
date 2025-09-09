@@ -2,6 +2,7 @@ package dom.bosco.api.usuario.model;
 
 import dom.bosco.api.usuario.dto.DtoAtualizarUsuario;
 import dom.bosco.api.usuario.dto.DtoCadastrarUsuario;
+import dom.bosco.api.usuario.cargo.Cargo;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -52,9 +53,8 @@ public class Usuario implements UserDetails {
     @Column(name = "endereco")
     private String endereco;
 
-    @Valid
-    @Column(name = "cargo")
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "cargo_id")
     private Cargo cargo;
 
     // Metadados
@@ -64,7 +64,7 @@ public class Usuario implements UserDetails {
     @Column(name = "atualizado_em")
     private LocalDateTime atualizadoEm;
 
-    public Usuario(@Valid DtoCadastrarUsuario dados) {
+    public Usuario(@Valid DtoCadastrarUsuario dados, Cargo cargo) {
         this.ativo = true;
         this.usuario = dados.usuario();
         this.senha = dados.senha();
@@ -72,7 +72,7 @@ public class Usuario implements UserDetails {
         this.cpf = dados.cpf();
         this.email = dados.email();
         this.celular = dados.celular();
-        this.cargo = dados.cargo();
+        this.cargo = cargo;
         this.endereco = dados.endereco();
     }
 
@@ -87,7 +87,7 @@ public class Usuario implements UserDetails {
         atualizadoEm = LocalDateTime.now();
     }
 
-    public void atualizarDados(@Valid DtoAtualizarUsuario dados) {
+    public void atualizarDados(@Valid DtoAtualizarUsuario dados, Cargo cargo) {
         if (dados.usuario() != null) {
             this.usuario = dados.usuario();
         }
@@ -106,8 +106,8 @@ public class Usuario implements UserDetails {
         if (dados.celular() != null) {
             this.celular = dados.celular();
         }
-        if (dados.cargo() != null) {
-            this.cargo = dados.cargo();
+        if (cargo != null) {
+            this.cargo = cargo;
         }
         if (dados.endereco() != null) {
             this.endereco = dados.endereco();
@@ -120,7 +120,6 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Retorna a role/cargo do usuário para o Spring Security
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 

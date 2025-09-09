@@ -1,6 +1,5 @@
 package dom.bosco.api.usuario.dto;
 
-import dom.bosco.api.usuario.model.Cargo;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -30,7 +29,7 @@ public record DtoCadastrarUsuario(
         String endereco,
 
         @NotNull(message = "Cargo é obrigatório")
-        Cargo cargo
+        Long cargoId
 
 ) {
 }

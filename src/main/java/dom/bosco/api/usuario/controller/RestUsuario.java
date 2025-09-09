@@ -1,12 +1,14 @@
 package dom.bosco.api.usuario.controller;
 
 import dom.bosco.api.usuario.RepoUsuario;
+import dom.bosco.api.usuario.cargo.RepoCargo;
 import dom.bosco.api.usuario.dto.DtoAtualizarUsuario;
 import dom.bosco.api.usuario.dto.DtoCadastrarUsuario;
 import dom.bosco.api.usuario.dto.DtoDetalhamentoUsuario;
 import dom.bosco.api.usuario.dto.DtoListarUsuario;
 import dom.bosco.api.usuario.model.Usuario;
 import dom.bosco.api.usuario.service.ValidadorCadastroUsuario;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ import java.util.List;
 public class RestUsuario {
 
     private final RepoUsuario repositorio;
+    private final RepoCargo repoCargo; // Repositório de Cargo injetado
     private final ValidadorCadastroUsuario validador;
 
     @PostMapping
@@ -36,7 +39,10 @@ public class RestUsuario {
         log.info("Cadastrando Usuário: {}", dados);
 
         validador.validarCadastro(dados);
-        var usuario = new Usuario(dados);
+        var cargo = repoCargo.findById(dados.cargoId())
+                .orElseThrow(() -> new EntityNotFoundException("Cargo com ID " + dados.cargoId() + " não encontrado."));
+
+        var usuario = new Usuario(dados, cargo);
         repositorio.save(usuario);
 
         var uri = uriBuilder.path("/usuario/{id}").buildAndExpand(usuario.getId()).toUri();
@@ -69,7 +75,11 @@ public class RestUsuario {
     @Transactional
     public ResponseEntity<DtoDetalhamentoUsuario> atualizarUsuario(@RequestBody @Valid DtoAtualizarUsuario dados) {
         var usuario = repositorio.getReferenceById(dados.id());
-        usuario.atualizarDados(dados);
+
+        var cargo = repoCargo.findById(dados.cargoId())
+                .orElseThrow(() -> new EntityNotFoundException("Cargo com ID " + dados.cargoId() + " não encontrado."));
+
+        usuario.atualizarDados(dados, cargo);
         return ResponseEntity.ok(new DtoDetalhamentoUsuario(usuario));
     }
 
