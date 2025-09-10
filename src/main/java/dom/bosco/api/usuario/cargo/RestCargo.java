@@ -2,6 +2,7 @@ package dom.bosco.api.usuario.cargo;
 
 import dom.bosco.api.usuario.cargo.dto.DtoCadastrarCargo;
 import dom.bosco.api.usuario.cargo.dto.DtoVisualizarCargo;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Slf4j
 @CrossOrigin
 @RequiredArgsConstructor
-@RequestMapping("cargo")
+@RequestMapping("/cargo")
 public class RestCargo {
     private final RepoCargo repositorio;
 
@@ -39,5 +40,39 @@ public class RestCargo {
     public ResponseEntity<Page<DtoVisualizarCargo>> listar(@PageableDefault(size = 100, sort = {"nome"}) Pageable paginacao) {
         var page = repositorio.findAll(paginacao).map(DtoVisualizarCargo::new);
         return ResponseEntity.ok(page);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<DtoVisualizarCargo> buscarPorId(@PathVariable Long id) {
+        var cargo = repositorio.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cargo não encontrado com ID: " + id));
+        return ResponseEntity.ok(new DtoVisualizarCargo(cargo));
+    }
+
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity<DtoVisualizarCargo> atualizar(@PathVariable Long id, @RequestBody @Valid DtoCadastrarCargo dados) {
+        log.info("Atualizando Cargo com ID: {}", id);
+        var cargo = repositorio.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cargo não encontrado com ID: " + id));
+        
+        cargo.setNome(dados.nome());
+        //cargo.setPermissoes(dados.permissoes());
+        
+        repositorio.save(cargo);
+        log.info("Cargo atualizado com sucesso!");
+        return ResponseEntity.ok(new DtoVisualizarCargo(cargo));
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        log.info("Deletando Cargo com ID: {}", id);
+        if (!repositorio.existsById(id)) {
+            throw new EntityNotFoundException("Cargo não encontrado com ID: " + id);
+        }
+        log.info("Deletando Cargo {}", id);
+        repositorio.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

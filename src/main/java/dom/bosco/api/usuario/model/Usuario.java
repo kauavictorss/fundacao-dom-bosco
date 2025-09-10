@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -120,7 +121,10 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        if (this.cargo == null || this.cargo.getNome() == null || this.cargo.getNome().isBlank()) {
+            return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")); // Permissão padrão e segura
+        }
+        return List.of(new SimpleGrantedAuthority("CARGO_" + this.cargo.getNome().toUpperCase().replaceAll("\\s+", "_")));
     }
 
     @Override

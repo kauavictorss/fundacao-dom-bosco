@@ -53,4 +53,14 @@ public class Cargo {
         this.ativo = true;
         this.nome = dados.nome();
     }
+
+    public void atualizarDados(@Valid DtoAtualizarCargo dados) {
+        if (dados.nome() != null) {
+            this.nome = dados.nome();
+        }
+    }
+
+    public void excuir() {
+        ativo = false;
+    }
 }

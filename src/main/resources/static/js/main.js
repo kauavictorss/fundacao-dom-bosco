@@ -2,13 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 1. FUNÇÕES DE BUSCA DE DADOS (API) ---
 
-    async function fetchData(url) {
+    async function fetchData(url, options = {}) {
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, options);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return await response.json();
+            // Retorna um objeto vazio se a resposta for 204 No Content
+            return response.status === 204 ? {} : await response.json();
         } catch (error) {
             console.error(`Falha ao buscar dados de ${url}:`, error);
             return null;
@@ -16,6 +17,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 2. FUNÇÕES DE RENDERIZAÇÃO (EXIBIÇÃO DE DADOS) ---
+
+    function renderizarFuncionariosComPermissoes(funcionarios) {
+        const container = document.getElementById('funcionario-list-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+        container.className = 'permissions-grid'; // Usa um layout de grade para os cards
+
+        if (!funcionarios || funcionarios.length === 0) {
+            container.innerHTML = '<p>Nenhum funcionário cadastrado.</p>';
+            container.className = ''; // Reseta a classe se estiver vazio
+            return;
+        }
+
+        funcionarios.forEach(user => {
+            const card = document.createElement('div');
+            card.className = 'permission-card';
+
+            const cargoNome = user.cargo ? user.cargo.nome : 'Sem cargo';
+            // As permissões virão do cargo. Se não houver, usa um objeto vazio.
+            const cargoPermissoes = user.cargo ? user.cargo.permissoes : {};
+
+            card.innerHTML = `
+                <div class="permission-card-header">
+                    <h3>${user.nome}</h3>
+                    <span class="role-badge">${cargoNome}</span>
+                </div>
+                <div class="permission-access-container">
+                    <p class="permission-access-info-text">As permissões abaixo são baseadas no cargo do usuário. A edição individual ainda não está disponível.</p>
+                    <div id="tab-permissions-for-user-${user.id}" class="user-tab-permissions-container"></div>
+                </div>
+                <div class="permission-card-actions">
+                    <button class="btn-secondary" onclick="alert('Visualização de detalhes a ser implementada.')"><i class="fa-solid fa-eye"></i> Ver Detalhes</button>
+                    <button class="btn-primary" disabled title="A funcionalidade de salvar permissões individuais requer alterações no backend."><i class="fa-solid fa-save"></i> Salvar Permissões</button>
+                </div>
+            `;
+            container.appendChild(card);
+
+            // Popula as permissões para o card deste usuário específico
+            populateCargoPermissions(`tab-permissions-for-user-${user.id}`, cargoPermissoes);
+        });
+    }
 
     function renderizarLista(containerId, data, renderCardFn, emptyMessage) {
         const container = document.getElementById(containerId);
@@ -54,25 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         return clientCard;
-    }
-
-    function criarCardFuncionario(user) {
-        const employeeCard = document.createElement('div');
-        employeeCard.className = 'employee-card';
-        employeeCard.innerHTML = `
-            <div class="card-header">
-                 <h4>${user.nome}</h4>
-                 <span class="employee-id">ID: ${user.id}</span>
-            </div>
-            <div class="card-body">
-                <p><strong>Cargo:</strong> ${user.cargo.nome || 'Não informado'}</p>
-                <p><strong>Email:</strong> ${user.email || 'Não informado'}</p>
-            </div>
-            <div class="card-actions">
-                <button class="btn-secondary btn-sm" data-user-id="${user.id}">Ver Detalhes</button>
-            </div>
-        `;
-        return employeeCard;
     }
 
     function popularModalCliente(cliente) {
@@ -188,29 +212,73 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
     }
 
-    async function loadAndPopulateCargos() {
-        const cargosData = await getCargos(); // cargosData é o objeto de paginação
-        if (cargosData && cargosData.content) {
-            const cargos = cargosData.content; // Extrai a lista de cargos
-            populateCargosDropdowns(cargos, ['new-funcionario-cargo', 'funcionario-cargo-filter']);
-            renderCargosList(cargos);
+    async function deleteCargo(id) {
+        const response = await fetchData(`/cargo/${id}`, { method: 'DELETE' });
+        if (response !== null) {
+            alert('Cargo excluído com sucesso!');
+            await loadAndPopulateCargos();
+        } else {
+            alert('Falha ao excluir o cargo.');
         }
     }
 
-    function setupCargoManagementListeners() {
+    function showCargoEditor(cargo) {
         const cargoEditor = document.getElementById('cargo-editor-container');
         const cargoEditorTitle = document.getElementById('cargo-editor-title');
         const cargoForm = document.getElementById('form-cargo-editor');
         const cargoNameInput = document.getElementById('cargo-name');
         const cargoIdInput = document.getElementById('cargo-editor-id');
 
-        document.getElementById('btn-create-new-cargo')?.addEventListener('click', () => {
-            cargoForm.reset();
+        cargoForm.reset();
+        if (cargo) {
+            cargoIdInput.value = cargo.id;
+            cargoNameInput.value = cargo.nome;
+            cargoEditorTitle.textContent = 'Editar Cargo';
+            populateCargoPermissions('cargo-tab-permissions', cargo.permissoes || {});
+        } else {
             cargoIdInput.value = '';
             cargoEditorTitle.textContent = 'Criar Novo Cargo';
             populateCargoPermissions('cargo-tab-permissions', {});
-            cargoEditor.style.display = 'block';
+        }
+        cargoEditor.style.display = 'block';
+    }
+
+    async function loadAndPopulateCargos() {
+        const cargosData = await getCargos();
+        if (cargosData && cargosData.content) {
+            const cargos = cargosData.content;
+            populateCargosDropdowns(cargos, ['new-funcionario-cargo', 'funcionario-cargo-filter']);
+            renderCargosList(cargos);
+        }
+    }
+
+    function setupCargoManagementListeners() {
+        const cargoListContainer = document.getElementById('cargos-list-container');
+        const cargoEditor = document.getElementById('cargo-editor-container');
+        const cargoForm = document.getElementById('form-cargo-editor');
+
+        // Event delegation para os botões de ação dos cargos
+        cargoListContainer.addEventListener('click', async (e) => {
+            const editButton = e.target.closest('.btn-edit-cargo');
+            const deleteButton = e.target.closest('.btn-delete-cargo');
+
+            if (editButton) {
+                const cargoId = editButton.closest('.cargo-item').dataset.cargoId;
+                const cargo = await fetchData(`/cargo/${cargoId}`);
+                if (cargo) {
+                    showCargoEditor(cargo);
+                }
+            }
+
+            if (deleteButton) {
+                const cargoId = deleteButton.closest('.cargo-item').dataset.cargoId;
+                if (confirm(`Tem certeza que deseja excluir o cargo com ID ${cargoId}?`)) {
+                    await deleteCargo(cargoId);
+                }
+            }
         });
+
+        document.getElementById('btn-create-new-cargo')?.addEventListener('click', () => showCargoEditor(null));
 
         document.getElementById('btn-cancel-cargo-edit')?.addEventListener('click', () => {
             cargoEditor.style.display = 'none';
@@ -219,7 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         cargoForm?.addEventListener('submit', async (event) => {
             event.preventDefault();
-            const cargoName = cargoNameInput.value.trim();
+            const cargoId = document.getElementById('cargo-editor-id').value;
+            const cargoName = document.getElementById('cargo-name').value.trim();
             if (!cargoName) {
                 alert('O nome do cargo não pode estar vazio.');
                 return;
@@ -239,20 +308,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 permissoes: permissoes
             };
 
+            const url = cargoId ? `/cargo/${cargoId}` : '/cargo';
+            const method = cargoId ? 'PUT' : 'POST';
+
             try {
-                const response = await fetch('/cargo', {
-                    method: 'POST',
+                const response = await fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(cargoData)
                 });
 
-                if (response.ok || response.status === 201) {
-                    alert('Cargo salvo com sucesso!');
+                if (response.ok) {
+                    alert(`Cargo ${cargoId ? 'atualizado' : 'salvo'} com sucesso!`);
                     cargoForm.reset();
                     cargoEditor.style.display = 'none';
-                    await loadAndPopulateCargos(); // Refresh lists
+                    await loadAndPopulateCargos();
                 } else {
                     const error = await response.json();
                     alert(`Erro ao salvar cargo: ${error.message || 'Erro desconhecido.'}`);
@@ -281,11 +353,11 @@ document.addEventListener('DOMContentLoaded', () => {
             usuario: form.querySelector('#new-funcionario-username').value,
             senha: form.querySelector('#new-funcionario-password').value,
             nome: form.querySelector('#new-funcionario-name').value,
-            cpf: form.querySelector('#new-funcionario-cpf').value.replace(/\D/g, ''), // Remove non-digit characters
+            cpf: form.querySelector('#new-funcionario-cpf').value.replace(/\D/g, ''),
             email: form.querySelector('#new-funcionario-email').value,
             celular: form.querySelector('#new-funcionario-phone').value,
             endereco: form.querySelector('#new-funcionario-address').value,
-            cargoId: cargoId // Enviar apenas o ID do cargo
+            cargoId: cargoId
         };
 
         try {
@@ -297,12 +369,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(dados)
             });
 
-            if (response.ok || response.status === 201) {
+            if (response.ok) {
                 alert('Funcionário cadastrado com sucesso!');
                 form.reset();
                 document.getElementById('modal-add-funcionario').style.display = 'none';
                 const funcionariosData = await fetchData('/usuario/listar/ativos');
-                renderizarLista('funcionario-list-container', funcionariosData, criarCardFuncionario, 'Nenhum funcionário encontrado.');
+                if (funcionariosData && funcionariosData.content) {
+                    renderizarFuncionariosComPermissoes(funcionariosData.content);
+                }
             } else {
                 const errorData = await response.json();
                 const errorMessage = errorData.message || (errorData.errors ? errorData.errors.map(e => e.defaultMessage).join(', ') : 'Verifique os dados e tente novamente.');
@@ -505,11 +579,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderizarLista( 'client-list-container', todosClientesData, criarCardCliente, 'Nenhum cliente (ativo ou inativo) encontrado.');
         renderizarLista('meus-pacientes-list', meusPacientesData, criarCardCliente, 'Nenhum paciente ativo encontrado.');
-        renderizarLista('funcionario-list-container', funcionariosData, criarCardFuncionario, 'Nenhum funcionário encontrado.');
+        
+        if (funcionariosData && funcionariosData.content) {
+            renderizarFuncionariosComPermissoes(funcionariosData.content);
+        } else {
+            renderizarFuncionariosComPermissoes([]); // Renderiza a mensagem de vazio se não houver dados
+        }
 
         // Carrega e popula os cargos
         await loadAndPopulateCargos();
     }
 
-    initializeApp().then(r => console.log('App inicializado.'));
+    initializeApp().then();
 });
